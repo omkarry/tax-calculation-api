@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EmployeeTaxCalculation.Data\EmployeeTaxCalculation.Data.csproj" />
+  </ItemGroup>
+
 </Project>
