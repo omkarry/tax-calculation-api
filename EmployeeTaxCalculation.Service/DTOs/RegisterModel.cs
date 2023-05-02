@@ -4,6 +4,9 @@ namespace EmployeeTaxCalculation.Data.DTOs
 {
     public class RegisterModel
     {
+        [Required(ErrorMessage = "Name is required")]
+        public string? Name { get; set; }
+
         [Required(ErrorMessage = "User Name is required")]
         public string? Username { get; set; }
 

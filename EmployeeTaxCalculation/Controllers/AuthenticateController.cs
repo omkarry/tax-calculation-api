@@ -14,12 +14,12 @@ namespace EmployeeTaxCalculation.Controllers
     [ApiController]
     public class AuthenticateController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
 
         public AuthenticateController(
-            UserManager<IdentityUser> userManager,
+            UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration)
         {
@@ -67,7 +67,7 @@ namespace EmployeeTaxCalculation.Controllers
             if (userExists != null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object> { StatusCode = 500, Message = "User already exists!" });
 
-            IdentityUser user = new()
+            User user = new()
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),

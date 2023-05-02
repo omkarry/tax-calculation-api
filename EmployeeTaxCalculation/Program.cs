@@ -1,3 +1,6 @@
+using EmployeeTaxCalculation.Data.Models;
+using EmployeeTaxCalculation.Service.Interfaces;
+using EmployeeTaxCalculation.Service.Services;
 using EmplyeeTaxCalculation.Data.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -14,8 +17,10 @@ ConfigurationManager configuration = builder.Configuration;
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
 
+builder.Services.AddScoped<IEmployeeRepository, EmployeeService>();
+
 // For Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 

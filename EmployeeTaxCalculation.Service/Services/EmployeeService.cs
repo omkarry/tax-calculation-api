@@ -80,21 +80,14 @@ namespace EmployeeTaxCalculation.Service.Services
                 await _userManager.AddToRoleAsync(user, UserRoles.Employee);
             }
 
-            try
+            Employee newEmployee = new Employee()
             {
-                Employee newEmployee = new Employee()
-                {
-                    Id = user.Id,
-                    IsActive = true,
-                };
-                _dbContext.Employees.Add(newEmployee);
-                await _dbContext.SaveChangesAsync();
-            }
-            catch (Exception e)
-            {
-                return e.Message;
-            }
-
+                Id = user.Id,
+                Name = inputModel?.Name,
+                IsActive = true
+            };
+            _dbContext.Employees.Add(newEmployee);
+            await _dbContext.SaveChangesAsync();
             return user.Id;
         }
 

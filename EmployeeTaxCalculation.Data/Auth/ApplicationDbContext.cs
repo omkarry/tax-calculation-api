@@ -1,10 +1,7 @@
-﻿using EmployeeTaxCalculation.Data.Auth;
-using EmployeeTaxCalculation.Data.Models;
+﻿using EmployeeTaxCalculation.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-using System.Reflection.Emit;
 
 namespace EmplyeeTaxCalculation.Data.Auth
 {

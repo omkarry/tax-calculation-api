@@ -5,11 +5,6 @@ using EmployeeTaxCalculation.Service.Interfaces;
 using EmployeeTaxCalculation.Service.Mappers;
 using EmplyeeTaxCalculation.Data.Auth;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EmployeeTaxCalculation.Service.Services
 {
@@ -86,7 +81,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 await _dbContext.SaveChangesAsync();
                 return empWithSalaryExist.Id;
             }
-            return 1;
+            return null;
         }
     }
 }
