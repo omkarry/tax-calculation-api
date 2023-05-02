@@ -13,7 +13,7 @@
 //                {
 //                        UserName = "Admin",
 //                        Email = "admin@gmail.com",
-//                        PasswordHash = "$2a$04$a9g0Lj22TOdlgCdMxV0g8edm.dyVbT9/HaIFJgHU7UAix7NSwA6nG"
+//                        PasswordHash = "Admin@123"
 //                });
 //        }
 //    }

@@ -39,7 +39,8 @@ namespace EmployeeTaxCalculation.Service.Services
                 await _dbContext.SaveChangesAsync();
                 return newSalaryDetails.Id;
             }
-            return 1;
+            else
+                return 1;
         }
 
         public async Task<bool> DeleteSalaryDetails(int id)

@@ -17,7 +17,12 @@ ConfigurationManager configuration = builder.Configuration;
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
 
+builder.Services.AddAutoMapper(typeof(Program));
+
 builder.Services.AddScoped<IEmployeeRepository, EmployeeService>();
+builder.Services.AddScoped<IEmployeeSalaryDetailsRepository, EmployeeSalaryDetailsService>();
+builder.Services.AddScoped<IInvestmentDeclarationRepository, InvestmentDeclarationService>();
+builder.Services.AddScoped<ITaxCalculationRepository, TaxCalculationService>();
 
 // For Identity
 builder.Services.AddIdentity<User, IdentityRole>()

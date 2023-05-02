@@ -33,14 +33,14 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<List<EmployeeDto>> GetEmployees()
         {
-            List<Employee> employees = await _dbContext.Employees.Include(e => e.User).Where(e => e.IsActive.Equals(1)).ToListAsync();
+            List<Employee> employees = await _dbContext.Employees.Include(e => e.User).Where(e => e.IsActive == true).ToListAsync();
             return employees.Select(e => EmployeeMapper.Map(e)).ToList();
         }
 
         public async Task<EmployeeDto?> GetEmployeeById(string id)
         {
             Employee? result = await _dbContext.Employees.Include(e => e.User)
-                                                  .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive.Equals(1));
+                                                  .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
             if (result != null)
             {
                 EmployeeDto employee = EmployeeMapper.Map(result);
@@ -94,20 +94,20 @@ namespace EmployeeTaxCalculation.Service.Services
         public async Task<string?> UpdateEmployee(string id, EmployeeDto updatedEmployee)
         {
             Employee? employee = await _dbContext.Employees.Include(e => e.User)
-                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive.Equals(true));
+                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
 
             if (employee != null)
             {
                 if (!string.IsNullOrEmpty(updatedEmployee.Name))
                     employee.Name = updatedEmployee.Name;
 
-                if (string.IsNullOrEmpty(updatedEmployee.Gender))
+                if (!string.IsNullOrEmpty(updatedEmployee.Gender))
                     employee.Gender = updatedEmployee.Gender;
 
-                if (string.IsNullOrEmpty(updatedEmployee.DOB.ToString()))
+                if (!string.IsNullOrEmpty(updatedEmployee.DOB.ToString()))
                     employee.DOB = updatedEmployee.DOB;
 
-                if (string.IsNullOrEmpty(updatedEmployee.ProfileImagePath))
+                if (!string.IsNullOrEmpty(updatedEmployee.ProfileImagePath))
                     employee.ProfileImagePath = updatedEmployee.ProfileImagePath;
 
                 await _dbContext.SaveChangesAsync();
@@ -120,7 +120,7 @@ namespace EmployeeTaxCalculation.Service.Services
         public async Task<string> DeleteEmployee(string id)
         {
             Employee? employee = await _dbContext.Employees.Include(e => e.User)
-                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive.Equals(1));
+                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
 
             if (employee != null)
             {
