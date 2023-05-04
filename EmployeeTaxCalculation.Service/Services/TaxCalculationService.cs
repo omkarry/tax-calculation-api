@@ -1,4 +1,6 @@
-﻿using EmployeeTaxCalculation.Service.Interfaces;
+﻿using EmployeeTaxCalculation.Data.Models;
+using EmployeeTaxCalculation.Service.Constants;
+using EmployeeTaxCalculation.Service.Interfaces;
 using EmplyeeTaxCalculation.Data.Auth;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,64 +14,82 @@ namespace EmployeeTaxCalculation.Service.Services
             _dbContext = dbContext;
         }
 
-        public async Task<decimal?> CalculateTaxableAmount(string EmpId)
+        public async Task<decimal?> TotalIncome(string empId)
         {
-            var EmpSalaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == EmpId);
-            if (EmpSalaryDetails != null)
-            {
-                var EmpInvestmentDetails = await _dbContext.InvestmentDeclarations.FirstOrDefaultAsync(s => s.EmployeeId == EmpId);
-
-                decimal? section80D = 0;
-                decimal? section80C = EmpInvestmentDetails?.ProvidentFund + EmpInvestmentDetails?.LifeInsurance + EmpInvestmentDetails?.PPF +
-                    EmpInvestmentDetails?.NSC + EmpInvestmentDetails?.HousingLoan + +EmpInvestmentDetails?.ChildrenEducation +
-                    EmpInvestmentDetails?.InfraBondsOrMFs + EmpInvestmentDetails?.OtherInvestments + EmpInvestmentDetails?.PensionScheme;
-
-                var taxableAmount = (EmpSalaryDetails?.BasicPay +
+            SalaryDetails? EmpSalaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == empId);
+            decimal? totalIncome = (EmpSalaryDetails?.BasicPay +
                             EmpSalaryDetails?.HRA +
                             EmpSalaryDetails?.ConveyanceAllowance +
                             EmpSalaryDetails?.MedicalAllowance +
                             EmpSalaryDetails?.OtherAllowance +
                             EmpSalaryDetails?.EPF +
-                            EmpSalaryDetails?.ProfessionalTax) * 12 +
-                            EmpInvestmentDetails?.InterestOnSavings +
-                            EmpInvestmentDetails?.InterestOnDeposit +
-                            EmpInvestmentDetails?.OtherIncome;
+                            EmpSalaryDetails?.ProfessionalTax) * 12;
+            return totalIncome;
+        }
 
-                if (EmpInvestmentDetails?.Section80DDB > 100000)
-                    EmpInvestmentDetails.Section80DDB = 100000;
+        public async Task<decimal?> CalculateSection80CAmount(string empId)
+        {
+            List<EmployeeInvestment>? empInvestmentDetails = await _dbContext.EmployeeInvestments.Where(s => s.EmployeeId == empId && s.SubSections.Section.SectionName == "Section80").ToListAsync();
 
-                if (EmpInvestmentDetails?.Section80U > 125000)
-                    EmpInvestmentDetails.Section80U = 125000;
+            decimal? section80C = empInvestmentDetails.Select(s => s.InvestedAmount).Sum();
+            return section80C;
+        }
 
-                if (EmpInvestmentDetails?.Section80CCG > 25000)
-                    EmpInvestmentDetails.Section80CCG = 25000;
+        public async Task<decimal?> CalculateTaxableAmount(string empId)
+        {
+            SalaryDetails? EmpSalaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == empId);
+            if (EmpSalaryDetails != null)
+            {
+                List<EmployeeInvestment>? empInvestmentDetails = await _dbContext.EmployeeInvestments.Where(s => s.EmployeeId == empId).ToListAsync();
 
-                if (EmpInvestmentDetails?.Section80DD > 125000)
-                    EmpInvestmentDetails.Section80DD = 125000;
+                decimal? section80C = await CalculateSection80CAmount(empId);
 
-                if ((EmpInvestmentDetails?.HealthCheckup + EmpInvestmentDetails?.HealthInsurance) > 25000)
-                    section80D += 25000;
-                else
-                    section80D += EmpInvestmentDetails?.HealthCheckup + EmpInvestmentDetails?.HealthInsurance;
-                if ((EmpInvestmentDetails?.HealthCheckup + EmpInvestmentDetails?.HealthInsurance) > 25000)
-                    section80D += 25000;
-                else
-                    section80D += EmpInvestmentDetails?.HealthCheckupParent + EmpInvestmentDetails?.HealthInsuranceParent;
+                decimal? taxableAmount = await TotalIncome(empId);
 
-                if ((section80C) > 1500000)
-                    section80C = 150000;
+                decimal? totalDeductableAmount = 0;
 
-                if (EmpInvestmentDetails?.HouseRent > 60000)
-                    EmpInvestmentDetails.HouseRent = 60000;
+                foreach (EmployeeInvestment emp in empInvestmentDetails)
+                {
+                    if (emp.SubSections?.MaxLimit != null)
+                    {
+                        if (emp.InvestedAmount > emp.SubSections?.MaxLimit)
+                        {
+                            emp.InvestedAmount = emp.SubSections.MaxLimit;
+                            totalDeductableAmount -= emp.InvestedAmount;
+                        }
+                        else
+                            totalDeductableAmount -= emp.InvestedAmount;
+                    }
+                }
 
-                var totalDeductableAmount = EmpInvestmentDetails?.Section80G +
-                                            EmpInvestmentDetails?.Section80DDB +
-                                            EmpInvestmentDetails?.Section80U +
-                                            EmpInvestmentDetails?.Section80CCG +
-                                            EmpInvestmentDetails?.Section80DD +
-                                            EmpInvestmentDetails?.Section80CCD +
-                                            section80D + section80C +
-                                            EmpInvestmentDetails?.HouseRent;
+
+
+                //if (EmpInvestmentDetails?.Section80DDB > EmployeeInvestmentLimits.Section80DDBLimit)
+                //    EmpInvestmentDetails.Section80DDB = EmployeeInvestmentLimits.Section80DDBLimit;
+
+                //if (EmpInvestmentDetails?.Section80U > EmployeeInvestmentLimits.Section80ULimit)
+                //    EmpInvestmentDetails.Section80U = EmployeeInvestmentLimits.Section80ULimit;
+
+                //if (EmpInvestmentDetails?.Section80CCG > EmployeeInvestmentLimits.Section80CCGLimit)
+                //    EmpInvestmentDetails.Section80CCG = EmployeeInvestmentLimits.Section80CCGLimit;
+
+                //if (EmpInvestmentDetails?.Section80DD > EmployeeInvestmentLimits.Section80DDLimit)
+                //    EmpInvestmentDetails.Section80DD = EmployeeInvestmentLimits.Section80DDLimit;
+
+                //if ((EmpInvestmentDetails?.HealthCheckup + EmpInvestmentDetails?.HealthInsurance) > EmployeeInvestmentLimits.Section80DLimit)
+                //    section80D += EmployeeInvestmentLimits.Section80DLimit;
+                //else
+                //    section80D += EmpInvestmentDetails?.HealthCheckup + EmpInvestmentDetails?.HealthInsurance;
+                //if ((EmpInvestmentDetails?.HealthCheckup + EmpInvestmentDetails?.HealthInsurance) > EmployeeInvestmentLimits.Section80DLimit)
+                //    section80D += EmployeeInvestmentLimits.Section80DLimit;
+                //else
+                //    section80D += EmpInvestmentDetails?.HealthCheckupParent + EmpInvestmentDetails?.HealthInsuranceParent;
+
+                //if ((section80C) > EmployeeInvestmentLimits.Section80CLimit)
+                //    section80C = EmployeeInvestmentLimits.Section80CLimit;
+
+                //if (EmpInvestmentDetails?.HouseRent > EmployeeInvestmentLimits.HouseRentLimit)
+                //    EmpInvestmentDetails.HouseRent = EmployeeInvestmentLimits.HouseRentLimit;
 
                 taxableAmount -= totalDeductableAmount;
                 return taxableAmount;
@@ -128,7 +148,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<decimal?> TaxByNewRegime(string EmpId)
         {
-            decimal? taxableAmount = await CalculateTaxableAmount(EmpId) - 50000;
+            decimal? taxableAmount = await TotalIncome(EmpId) - 50000;
             if (taxableAmount == null)
                 return null;
             else

@@ -21,7 +21,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<int> AddSalaryDetails(SalaryDetailsDto salaryDetails)
         {
-            var empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == salaryDetails.EmployeeId);
+            SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == salaryDetails.EmployeeId);
             if(empWithSalaryExist == null)
             {
                 SalaryDetails? newSalaryDetails = new()
@@ -45,7 +45,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<bool> DeleteSalaryDetails(int id)
         {
-            var empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.Id == id);
+            SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.Id == id);
             if (empWithSalaryExist != null)
             {
                 _dbContext.SalaryDetails.Remove(empWithSalaryExist);
@@ -57,7 +57,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<SalaryDetailsDto?> GetSalaryDetailsById(string id)
         {
-            var empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == id);
+            SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == id);
             if (empWithSalaryExist != null)
             {
                 return SalaryDetailsMapper.Map(empWithSalaryExist);
@@ -67,7 +67,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<int?> UpdateSalaryDetails(int salaryDetailsId, SalaryDetailsDto updatedSalaryDetails)
         {
-            var empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.Id == salaryDetailsId);
+            SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.Id == salaryDetailsId);
             if (empWithSalaryExist != null)
             {
                 empWithSalaryExist.BasicPay = updatedSalaryDetails.BasicPay;

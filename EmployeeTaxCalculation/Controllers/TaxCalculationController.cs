@@ -21,7 +21,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                var result = await _employee.TaxByOldRegime(empId);
+                decimal? result = await _employee.TaxByOldRegime(empId);
                 if (result != null)
                 {
                     return Ok(new ApiResponse<decimal?> { StatusCode = 200, Message = "Tax by old regime", Result = result }) ;
@@ -40,7 +40,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                var result = await _employee.TaxByNewRegime(empId);
+                decimal? result = await _employee.TaxByNewRegime(empId);
                 if (result != null)
                 {
                     return Ok(new ApiResponse<decimal?> { StatusCode = 200, Message = "Tax by New regime", Result = result });

@@ -49,7 +49,7 @@ namespace EmployeeTaxCalculation.Service.Services
             return null;
         }
 
-        public async Task<string> RegisterEmployee(RegisterModel inputModel)
+        public async Task<string> RegisterEmployee(RegisterDto inputModel)
         {
             User userExists = await _userManager.FindByNameAsync(inputModel.Username);
             if (userExists != null)
@@ -70,17 +70,18 @@ namespace EmployeeTaxCalculation.Service.Services
                 return "-1";
             }
 
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Employee))
+            bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
+
+            if (!roleExist)
             {
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
             }
-
-            if (await _roleManager.RoleExistsAsync(UserRoles.Employee))
+            else
             {
                 await _userManager.AddToRoleAsync(user, UserRoles.Employee);
             }
 
-            Employee newEmployee = new Employee()
+            Employee newEmployee = new()
             {
                 Id = user.Id,
                 Name = inputModel?.Name,

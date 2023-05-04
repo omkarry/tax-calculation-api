@@ -13,7 +13,9 @@ namespace EmplyeeTaxCalculation.Data.Auth
 
         public DbSet<Employee> Employees { get; set; }
         public DbSet<SalaryDetails> SalaryDetails { get; set; }
-        public DbSet<InvestmentDeclaration> InvestmentDeclarations { get; set; }
+        public DbSet<Section> Sections { get; set; }
+        public DbSet<SubSections> SubSections { get; set; }
+        public DbSet<EmployeeInvestment> EmployeeInvestments{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -26,7 +28,13 @@ namespace EmplyeeTaxCalculation.Data.Auth
             builder.Entity<SalaryDetails>()
                 .HasKey(s  => s.Id);
 
-            builder.Entity<InvestmentDeclaration>()
+            builder.Entity<Section>()
+                .HasKey(s => s.Id);
+
+            builder.Entity<SubSections>()
+                .HasKey(s => s.Id);
+
+            builder.Entity<EmployeeInvestment>()
                 .HasKey(i  => i.Id);
 
             builder.Entity<Employee>()
@@ -34,8 +42,16 @@ namespace EmplyeeTaxCalculation.Data.Auth
                 .WithOne(e => e.Employee);
 
             builder.Entity<Employee>()
-                .HasOne(e => e.InvestmentDeclaration)
+                .HasMany(e => e.EmployeeInvestments)
                 .WithOne(e => e.Employee);
+
+            builder.Entity<Section>()
+                .HasMany(e => e.SubSections)
+                .WithOne(e => e.Section);
+
+            builder.Entity<SubSections>()
+                .HasMany(e => e.Investments)
+                .WithOne(e => e.SubSections);
         }
     }
 }

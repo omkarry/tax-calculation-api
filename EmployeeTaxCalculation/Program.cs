@@ -11,6 +11,13 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
 
+builder.Services.AddCors(o => o.AddPolicy("ReactPolicy", builder =>
+{
+    builder.AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+}));
+
 // Add services to the container.
 
 // For Entity Framework
@@ -21,7 +28,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeService>();
 builder.Services.AddScoped<IEmployeeSalaryDetailsRepository, EmployeeSalaryDetailsService>();
-builder.Services.AddScoped<IInvestmentDeclarationRepository, InvestmentDeclarationService>();
+builder.Services.AddScoped<IEmployeeInvestmentRepository, EmployeeInvestmentService>();
 builder.Services.AddScoped<ITaxCalculationRepository, TaxCalculationService>();
 
 // For Identity
@@ -67,6 +74,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("ReactPolicy");
 
 // Authentication & Authorization
 app.UseAuthentication();

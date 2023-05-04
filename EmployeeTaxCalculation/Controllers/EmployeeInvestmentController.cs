@@ -8,10 +8,10 @@ namespace EmployeeTaxCalculation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class InvestmentDeclarationController : ControllerBase
+    public class EmployeeInvestmentController : ControllerBase
     {
-        private readonly IInvestmentDeclarationRepository _employee;
-        public InvestmentDeclarationController(IInvestmentDeclarationRepository employee)
+        private readonly IEmployeeInvestmentRepository _employee;
+        public EmployeeInvestmentController(IEmployeeInvestmentRepository employee)
         {
             _employee = employee;
         }
@@ -21,10 +21,10 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                var result = await _employee.GetInvestmentDeclarationById(id);
+                List<EmployeeInvestmentDto>? result = await _employee.GetEmployeeInvestmentById(id);
                 if (result != null)
                 {
-                    return Ok(new ApiResponse<InvestmentDeclarationDto> { StatusCode = 200, Message = "Employee's Investment Details", Result = result });
+                    return Ok(new ApiResponse<List<EmployeeInvestmentDto>> { StatusCode = 200, Message = "Employee's Investment Details", Result = result });
                 }
                 return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Employee with investment details not found" });
             }
@@ -35,19 +35,19 @@ namespace EmployeeTaxCalculation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] InvestmentDeclarationDto investmentDetails)
+        public async Task<IActionResult> Post(string empId, [FromBody] List<EmployeeInvestmentDto> investmentDetails)
         {
             try
             {
-                int result = await _employee.AddInvestmentDeclaration(investmentDetails);
+                bool result = await _employee.AddEmployeeInvestment(empId, investmentDetails);
 
-                if (result == 1)
+                if (!result)
                 {
                     return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Employee with investment details already exist" });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<int> { StatusCode = 200, Message = "Investment details added succesfully", Result = result });
+                    return Ok(new ApiResponse<bool> { StatusCode = 200, Message = "Investment details added succesfully", Result = result });
                 }
             }
             catch (Exception ex)
@@ -56,11 +56,11 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] InvestmentDeclarationDto updatedInvestmentDeclaration)
+        public async Task<IActionResult> Put(string id, [FromBody] List<EmployeeInvestmentDto> updatedEmployeeInvestment)
         {
             try
             {
-                int? result = await _employee.UpdateInvestmentDeclaration(id, updatedInvestmentDeclaration);
+                string? result = await _employee.UpdateEmployeeInvestment(id, updatedEmployeeInvestment);
                 if (result == null)
                 {
                     return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment details not found" });
@@ -81,7 +81,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                bool result = await _employee.DeleteInvestmentDeclaration(id);
+                bool result = await _employee.DeleteEmployeeInvestment(id);
                 if (!result)
                 {
                     return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment details Not Found" });

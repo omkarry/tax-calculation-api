@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace EmployeeTaxCalculation.Data.Migrations
 {
-    public partial class InitialMigration : Migration
+    public partial class Initial_Migration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -47,6 +47,19 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Sections",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SectionName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sections", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -164,58 +177,54 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DOB = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ProfileImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Employees", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Employees_AspNetUsers_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
+                    table.ForeignKey(
                         name: "FK_Employees_AspNetUsers_Id",
                         column: x => x.Id,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
+                    table.ForeignKey(
+                        name: "FK_Employees_AspNetUsers_UpdatedByUserId",
+                        column: x => x.UpdatedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
-                name: "InvestmentDeclarations",
+                name: "SubSections",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Section80G = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Section80DDB = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Section80U = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Section80CCG = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Section80DD = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Section80CCD = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HealthInsurance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HealthCheckup = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HealthInsuranceParent = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HealthCheckupParent = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ProvidentFund = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    LifeInsurance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    PPF = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    NSC = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HousingLoan = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ChildrenEducation = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    InfraBondsOrMFs = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    OtherInvestments = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    PensionScheme = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    NationalPensionScheme = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HouseRent = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    InterestOnSavings = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    InterestOnDeposit = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    OtherIncome = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    EmployeeId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    SubSectionName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SectionId = table.Column<int>(type: "int", nullable: false),
+                    MaxLimit = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_InvestmentDeclarations", x => x.Id);
+                    table.PrimaryKey("PK_SubSections", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_InvestmentDeclarations_Employees_EmployeeId",
-                        column: x => x.EmployeeId,
-                        principalTable: "Employees",
+                        name: "FK_SubSections_Sections_SectionId",
+                        column: x => x.SectionId,
+                        principalTable: "Sections",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -242,6 +251,33 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         name: "FK_SalaryDetails_Employees_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EmployeeInvestments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SubSectionId = table.Column<int>(type: "int", nullable: false),
+                    EmployeeId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    InvestedAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmployeeInvestments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmployeeInvestments_Employees_EmployeeId",
+                        column: x => x.EmployeeId,
+                        principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmployeeInvestments_SubSections_SubSectionId",
+                        column: x => x.SubSectionId,
+                        principalTable: "SubSections",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -286,16 +322,35 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvestmentDeclarations_EmployeeId",
-                table: "InvestmentDeclarations",
-                column: "EmployeeId",
-                unique: true);
+                name: "IX_EmployeeInvestments_EmployeeId",
+                table: "EmployeeInvestments",
+                column: "EmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmployeeInvestments_SubSectionId",
+                table: "EmployeeInvestments",
+                column: "SubSectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employees_CreatedByUserId",
+                table: "Employees",
+                column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employees_UpdatedByUserId",
+                table: "Employees",
+                column: "UpdatedByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SalaryDetails_EmployeeId",
                 table: "SalaryDetails",
                 column: "EmployeeId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubSections_SectionId",
+                table: "SubSections",
+                column: "SectionId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -316,7 +371,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "InvestmentDeclarations");
+                name: "EmployeeInvestments");
 
             migrationBuilder.DropTable(
                 name: "SalaryDetails");
@@ -325,7 +380,13 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
+                name: "SubSections");
+
+            migrationBuilder.DropTable(
                 name: "Employees");
+
+            migrationBuilder.DropTable(
+                name: "Sections");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

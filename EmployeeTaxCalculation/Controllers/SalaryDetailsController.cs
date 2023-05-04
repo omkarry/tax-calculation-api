@@ -20,7 +20,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                var result = await _employee.GetSalaryDetailsById(id);
+                SalaryDetailsDto? result = await _employee.GetSalaryDetailsById(id);
                 if (result != null)
                 {
                     return Ok(new ApiResponse<SalaryDetailsDto> { StatusCode = 200, Message = "Employee's Salary Details", Result = result });

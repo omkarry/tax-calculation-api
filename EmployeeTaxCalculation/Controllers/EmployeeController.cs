@@ -23,7 +23,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                var result = await _employee.GetEmployees();
+                List<EmployeeDto> result = await _employee.GetEmployees();
                 if (result != null)
                 {
                     return Ok(new ApiResponse<List<EmployeeDto>> { StatusCode = 200, Message = "List of Employees", Result = result });
@@ -41,7 +41,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                var result = await _employee.GetEmployeeById(id);
+                EmployeeDto? result = await _employee.GetEmployeeById(id);
                 if (result != null)
                 {
                     return Ok(new ApiResponse<EmployeeDto> { StatusCode = 200, Message = "Employee Details", Result = result });
@@ -55,7 +55,7 @@ namespace EmployeeTaxCalculation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] RegisterModel inputModel)
+        public async Task<IActionResult> Post([FromBody] RegisterDto inputModel)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace EmployeeTaxCalculation.Controllers
             try
             {
                 string? result = await _employee.UpdateEmployee(id, updatedEmployee);
-                if (result.Equals("0"))
+                if (result == "0")
                 {
                     return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Not found" });
                 }
