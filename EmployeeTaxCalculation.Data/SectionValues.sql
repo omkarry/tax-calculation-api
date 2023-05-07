@@ -10,10 +10,11 @@ INSERT INTO Sections (Id, SectionName) VALUES
 	(7, 'Section80DDB'),
 	(8, 'Section80G'),
 	(9, 'Section80U');
+SET IDENTITY_INSERT Sections OFF;
 
 SET IDENTITY_INSERT SubSections ON;
 
-INSERT INTO SubSections (SubSectionName, SectionId, MaxLimit) VALUES
+INSERT INTO SubSections (Id, SubSectionName, SectionId, MaxLimit) VALUES
 	(1, 'LeaveTravelAllowance', 1, '20000'),
 	(2, 'HouseRentAllowance', 1, NULL),
 	(3, 'ProvidentFund', 2, NULL),
@@ -24,8 +25,8 @@ INSERT INTO SubSections (SubSectionName, SectionId, MaxLimit) VALUES
 	(8, 'ChildrenEducation', 2, NULL),
 	(9, 'InfraBondsOrMFs', 2, NULL),
 	(10, 'OtherInvestments', 2, NULL),
-	(11, 'NationalPensionScheme', 3, NULL),
-	(12, 'InvestmentDemat', 4, NULL),
+	(11, 'NationalPensionScheme', 3, '200000'),
+	(12, 'InvestmentDemat', 4, '25000'),
 	(13, 'HealthInsurance&Checkup', 5, '25000'),
 	(14, 'HealthInsurance&CheckupParent', 5, '25000'),
 	(15, 'Disability40-80%', 6, '75000'),
@@ -35,3 +36,4 @@ INSERT INTO SubSections (SubSectionName, SectionId, MaxLimit) VALUES
 	(19, 'DonationToCharity', 8, null),
 	(20, 'SelfDisability40-80%', 9, '75000'),
 	(21, 'SelfDisabilityGreaterThan80', 9, '125000');
+SET IDENTITY_INSERT SubSections OFF;

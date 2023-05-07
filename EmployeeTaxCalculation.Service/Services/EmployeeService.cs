@@ -1,4 +1,5 @@
-﻿using EmployeeTaxCalculation.Data.Auth;
+﻿using AutoMapper.Execution;
+using EmployeeTaxCalculation.Data.Auth;
 using EmployeeTaxCalculation.Data.DTOs;
 using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.DTOs;
@@ -8,11 +9,6 @@ using EmplyeeTaxCalculation.Data.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EmployeeTaxCalculation.Service.Services
 {
@@ -49,47 +45,70 @@ namespace EmployeeTaxCalculation.Service.Services
             return null;
         }
 
-        public async Task<string> RegisterEmployee(RegisterDto inputModel)
+        public async Task<string> RegisterEmployee(string userId, EmployeeSalaryDto inputModel)
         {
-            User userExists = await _userManager.FindByNameAsync(inputModel.Username);
-            if (userExists != null)
+            try
             {
-                return "0";
+                User userExists = await _userManager.FindByNameAsync(inputModel.Username);
+                if (userExists != null)
+                {
+                    return "0";
+                }
+
+                User user = new User()
+                {
+                    Email = inputModel.Email,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    UserName = inputModel.Username,
+                };
+                IdentityResult result = await _userManager.CreateAsync(user, inputModel.Password);
+
+                if (!result.Succeeded)
+                {
+                    return "-1";
+                }
+
+                bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
+
+                if (!roleExist)
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
+                    await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                }
+                else
+                {
+                    await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                }
+
+                Employee newEmployee = new()
+                {
+                    Id = user.Id,
+                    Name = inputModel.Name,
+                    CreatedAt = DateTime.Now,
+                    CreatedById = userId,
+                    IsActive = true
+                };
+                SalaryDetails empSalaryDetails = new()
+                {
+                    Id = 0,
+                    BasicPay = inputModel.SalaryDetails.BasicPay,
+                    HRA = inputModel.SalaryDetails.HRA,
+                    ConveyanceAllowance = inputModel.SalaryDetails.ConveyanceAllowance,
+                    MedicalAllowance = inputModel.SalaryDetails.MedicalAllowance,
+                    OtherAllowance = inputModel.SalaryDetails.OtherAllowance,
+                    EPF = inputModel.SalaryDetails.EPF,
+                    ProfessionalTax = inputModel.SalaryDetails.ProfessionalTax,
+                    EmployeeId = user.Id
+                };
+                _dbContext.Employees.Add(newEmployee);
+                _dbContext.SalaryDetails.Add(empSalaryDetails);
+                await _dbContext.SaveChangesAsync();
+                return user.Id;
             }
-
-            User user = new User()
+            catch (Exception ex)
             {
-                Email = inputModel.Email,
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = inputModel.Username,
-            };
-            IdentityResult result = await _userManager.CreateAsync(user, inputModel.Password);
-
-            if (!result.Succeeded)
-            {
-                return "-1";
+                return ex.Message;
             }
-
-            bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
-
-            if (!roleExist)
-            {
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
-            }
-            else
-            {
-                await _userManager.AddToRoleAsync(user, UserRoles.Employee);
-            }
-
-            Employee newEmployee = new()
-            {
-                Id = user.Id,
-                Name = inputModel?.Name,
-                IsActive = true
-            };
-            _dbContext.Employees.Add(newEmployee);
-            await _dbContext.SaveChangesAsync();
-            return user.Id;
         }
 
         public async Task<string?> UpdateEmployee(string id, EmployeeDto updatedEmployee)

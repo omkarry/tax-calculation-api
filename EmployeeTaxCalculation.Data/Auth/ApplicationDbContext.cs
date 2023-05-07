@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace EmplyeeTaxCalculation.Data.Auth
 {
@@ -35,23 +36,43 @@ namespace EmplyeeTaxCalculation.Data.Auth
                 .HasKey(s => s.Id);
 
             builder.Entity<EmployeeInvestment>()
-                .HasKey(i  => i.Id);
+            .HasKey(i  => i.Id);
+
+            builder.Entity<Employee>()
+                .HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<Employee>(e => e.Id)
+            .IsRequired();
+
+            builder.Entity<Employee>()
+                .HasOne(e => e.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedById)
+            .IsRequired();
+
+            builder.Entity<Employee>()
+                .HasOne(e => e.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.UpdatedById);
 
             builder.Entity<Employee>()
                 .HasOne(e => e.SalaryDetails)
-                .WithOne(e => e.Employee);
-
-            builder.Entity<Employee>()
-                .HasMany(e => e.EmployeeInvestments)
                 .WithOne(e => e.Employee);
 
             builder.Entity<Section>()
                 .HasMany(e => e.SubSections)
                 .WithOne(e => e.Section);
 
-            builder.Entity<SubSections>()
-                .HasMany(e => e.Investments)
-                .WithOne(e => e.SubSections);
+            builder.Entity<EmployeeInvestment>()
+                .HasOne<SubSections>(e => e.SubSections)
+                .WithMany(e => e.Investments)
+                .HasForeignKey(e => e.SubSectionId);
+
+            builder.Entity<EmployeeInvestment>()
+                .HasOne<Employee>(e => e.Employee)
+                .WithMany(e => e.EmployeeInvestments)
+                .HasForeignKey(e => e.EmployeeId);
+
         }
     }
 }

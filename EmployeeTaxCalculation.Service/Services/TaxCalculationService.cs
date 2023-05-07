@@ -35,6 +35,18 @@ namespace EmployeeTaxCalculation.Service.Services
             return section80C;
         }
 
+        public async Task<decimal?> CalculateHRADeduction(string empId)
+        {
+            EmployeeInvestment? empInvestmentDetails = await _dbContext.EmployeeInvestments
+                .FirstOrDefaultAsync(s => s.EmployeeId == empId && s.SubSections.SubSectionName == "HouseRentAllowance");
+            SalaryDetails? salaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(e => e.EmployeeId == empId);
+
+            if (empInvestmentDetails?.InvestedAmount > salaryDetails?.HRA)
+                return salaryDetails?.HRA;
+            else
+                return empInvestmentDetails?.InvestedAmount;
+        }
+
         public async Task<decimal?> CalculateTaxableAmount(string empId)
         {
             SalaryDetails? EmpSalaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == empId);
@@ -43,6 +55,10 @@ namespace EmployeeTaxCalculation.Service.Services
                 List<EmployeeInvestment>? empInvestmentDetails = await _dbContext.EmployeeInvestments.Where(s => s.EmployeeId == empId).ToListAsync();
 
                 decimal? section80C = await CalculateSection80CAmount(empId);
+                decimal? hra = await CalculateHRADeduction(empId);
+                decimal? section80G = empInvestmentDetails
+                    .Where(e => e.SubSections.Section.SectionName == "Section80G")
+                    .Sum(e => e.InvestedAmount);
 
                 decimal? taxableAmount = await TotalIncome(empId);
 
@@ -55,14 +71,14 @@ namespace EmployeeTaxCalculation.Service.Services
                         if (emp.InvestedAmount > emp.SubSections?.MaxLimit)
                         {
                             emp.InvestedAmount = emp.SubSections.MaxLimit;
-                            totalDeductableAmount -= emp.InvestedAmount;
+                            totalDeductableAmount += emp.InvestedAmount;
                         }
                         else
-                            totalDeductableAmount -= emp.InvestedAmount;
+                            totalDeductableAmount += emp.InvestedAmount;
                     }
                 }
 
-
+                totalDeductableAmount += section80C + section80G + hra;
 
                 //if (EmpInvestmentDetails?.Section80DDB > EmployeeInvestmentLimits.Section80DDBLimit)
                 //    EmpInvestmentDetails.Section80DDB = EmployeeInvestmentLimits.Section80DDBLimit;
@@ -109,7 +125,7 @@ namespace EmployeeTaxCalculation.Service.Services
             {
                 decimal? taxToBePaid = 0;
 
-                if (taxableAmount <= 250000)
+                if (taxableAmount <= 500000)
                 {
                     return taxToBePaid;
                 }
@@ -155,7 +171,7 @@ namespace EmployeeTaxCalculation.Service.Services
             {
                 decimal? taxToBePaid = 0;
 
-                if (taxableAmount <= 300000)
+                if (taxableAmount <= 700000)
                 {
                     return taxToBePaid;
                 }

@@ -21,26 +21,33 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<int> AddSalaryDetails(SalaryDetailsDto salaryDetails)
         {
-            SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == salaryDetails.EmployeeId);
-            if(empWithSalaryExist == null)
+            try
             {
-                SalaryDetails? newSalaryDetails = new()
+                SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == salaryDetails.EmployeeId);
+                if (empWithSalaryExist == null)
                 {
-                    BasicPay = salaryDetails.BasicPay,
-                    HRA = salaryDetails.HRA,
-                    ConveyanceAllowance = salaryDetails.ConveyanceAllowance,
-                    MedicalAllowance = salaryDetails.MedicalAllowance,
-                    OtherAllowance = salaryDetails.MedicalAllowance,
-                    EPF = salaryDetails.EPF,
-                    ProfessionalTax = salaryDetails.ProfessionalTax,
-                    EmployeeId = salaryDetails.EmployeeId
-                };
-                _dbContext.SalaryDetails.Add(newSalaryDetails);
-                await _dbContext.SaveChangesAsync();
-                return newSalaryDetails.Id;
+                    SalaryDetails? newSalaryDetails = new()
+                    {
+                        BasicPay = salaryDetails.BasicPay,
+                        HRA = salaryDetails.HRA,
+                        ConveyanceAllowance = salaryDetails.ConveyanceAllowance,
+                        MedicalAllowance = salaryDetails.MedicalAllowance,
+                        OtherAllowance = salaryDetails.MedicalAllowance,
+                        EPF = salaryDetails.EPF,
+                        ProfessionalTax = salaryDetails.ProfessionalTax,
+                        EmployeeId = salaryDetails.EmployeeId
+                    };
+                    _dbContext.SalaryDetails.Add(newSalaryDetails);
+                    await _dbContext.SaveChangesAsync();
+                    return newSalaryDetails.Id;
+                }
+                else
+                    return 1;
             }
-            else
-                return 1;
+            catch(Exception ex)
+            {
+                return (-1);
+            }
         }
 
         public async Task<bool> DeleteSalaryDetails(int id)

@@ -27,15 +27,15 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedByUserId")
+                    b.Property<string>("CreatedById")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DOB")
                         .HasColumnType("datetime2");
@@ -56,17 +56,17 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
+                    b.Property<string>("UpdatedById")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UpdatedByUserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedById");
 
-                    b.HasIndex("UpdatedByUserId");
+                    b.HasIndex("UpdatedById");
 
                     b.ToTable("Employees");
                 });
@@ -396,19 +396,19 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 {
                     b.HasOne("EmployeeTaxCalculation.Data.Models.User", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId")
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("EmployeeTaxCalculation.Data.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("Id")
+                        .WithOne()
+                        .HasForeignKey("EmployeeTaxCalculation.Data.Models.Employee", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("EmployeeTaxCalculation.Data.Models.User", "UpdatedByUser")
                         .WithMany()
-                        .HasForeignKey("UpdatedByUserId");
+                        .HasForeignKey("UpdatedById");
 
                     b.Navigation("CreatedByUser");
 

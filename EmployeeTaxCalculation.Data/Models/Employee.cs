@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EmployeeTaxCalculation.Data.Models
 {
@@ -8,24 +9,38 @@ namespace EmployeeTaxCalculation.Data.Models
     {
         [Key, ForeignKey("User")]
         public string Id { get; set; }
+
         [Required]
         public string Name { get; set; }
+
         public string? Gender { get; set; }
+
         public DateTime? DOB { get; set; }
+
         public string? ProfileImagePath { get; set; }
-        public User User { get; set; }
-        public SalaryDetails? SalaryDetails { get; set; }
-        public ICollection<EmployeeInvestment>? EmployeeInvestments{ get; set; }
+
+        public virtual User User { get; set; }
+
+        public virtual SalaryDetails? SalaryDetails { get; set; }
+
+        public virtual ICollection<EmployeeInvestment> EmployeeInvestments { get; set; }
 
         [ForeignKey("CreatedBy")]
-        public int CreatedBy { get; set; }
-        public User CreatedByUser { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public string? CreatedById { get; set; }
 
         [ForeignKey("UpdatedBy")]
-        public int? UpdatedBy { get; set; }
-        public User? UpdatedByUser { get; set; }
+        public string? UpdatedById { get; set; }
+
+        [ForeignKey("CreatedByUserId")]
+        public virtual User? CreatedByUser { get; set; }
+
+        [ForeignKey("UpdatedByUserId")]
+        public virtual User? UpdatedByUser { get; set; }
+
+        public DateTime? CreatedAt { get; set; }
+
         public DateTime? UpdatedAt { get; set; }
+
         public bool IsActive { get; set; }
     }
 }

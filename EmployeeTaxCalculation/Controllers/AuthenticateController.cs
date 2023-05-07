@@ -84,12 +84,55 @@ namespace EmployeeTaxCalculation.Controllers
             if (!roleExist)
             {
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
+                await _userManager.AddToRoleAsync(user, UserRoles.Admin);
             }
             else
             {
                 await _userManager.AddToRoleAsync(user, UserRoles.Admin);
             }
             return Ok(new ApiResponse<object> { StatusCode = 200, Message = "User created successfully!" });
+        }
+
+        [HttpGet("IsEmailExist/{email}")]
+        public async Task<IActionResult> IsEmailExist(string email)
+        {
+            try
+            {
+                User? ext = await _userManager.FindByEmailAsync(email);
+                if (ext != null)
+                {
+                    return Ok(new ApiResponse<bool> { StatusCode = 200, Message = "User already exist with this email", Result = true });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<bool> { StatusCode = 200, Result = false });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("IsUsernameExist/{username}")]
+        public async Task<IActionResult> IsUsernameExist(string username)
+        {
+            try
+            {
+                User? ext = await _userManager.FindByNameAsync(username);
+                if (ext != null)
+                {
+                    return Ok(new ApiResponse<bool> { StatusCode = 200, Message = "User already exist with this username", Result = true });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<bool> { StatusCode = 200, Result = false });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         private JwtSecurityToken GetToken(List<Claim> authClaims)

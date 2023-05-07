@@ -177,20 +177,20 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DOB = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ProfileImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
-                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
-                    UpdatedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreatedById = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UpdatedById = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UpdatedByUserId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Employees", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Employees_AspNetUsers_CreatedByUserId",
-                        column: x => x.CreatedByUserId,
+                        name: "FK_Employees_AspNetUsers_CreatedById",
+                        column: x => x.CreatedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
@@ -201,8 +201,8 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
-                        name: "FK_Employees_AspNetUsers_UpdatedByUserId",
-                        column: x => x.UpdatedByUserId,
+                        name: "FK_Employees_AspNetUsers_UpdatedById",
+                        column: x => x.UpdatedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
@@ -332,14 +332,14 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 column: "SubSectionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_CreatedByUserId",
+                name: "IX_Employees_CreatedById",
                 table: "Employees",
-                column: "CreatedByUserId");
+                column: "CreatedById");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_UpdatedByUserId",
+                name: "IX_Employees_UpdatedById",
                 table: "Employees",
-                column: "UpdatedByUserId");
+                column: "UpdatedById");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SalaryDetails_EmployeeId",

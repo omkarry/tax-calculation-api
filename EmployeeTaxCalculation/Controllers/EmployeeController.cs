@@ -54,12 +54,12 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] RegisterDto inputModel)
+        [HttpPost("add/{userId}")]
+        public async Task<IActionResult> Post(string userId, [FromBody] EmployeeSalaryDto inputModel)
         {
             try
             {
-                string result = await _employee.RegisterEmployee(inputModel);
+                string result = await _employee.RegisterEmployee(userId, inputModel);
 
                 if (result.Equals("0"))
                 {
@@ -71,7 +71,7 @@ namespace EmployeeTaxCalculation.Controllers
                 }
                 else
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Created succesfully" });
+                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Created succesfully", Result = result });
                 }
             }
             catch (Exception ex)

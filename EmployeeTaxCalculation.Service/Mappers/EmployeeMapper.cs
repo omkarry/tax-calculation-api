@@ -11,6 +11,8 @@ namespace EmployeeTaxCalculation.Service.Mappers
             {
                 Id = entity.Id,
                 Name = entity.Name,
+                Email = entity.User.Email,
+                Username = entity.User.UserName,
                 DOB = entity.DOB,
                 Gender = entity.Gender,
                 ProfileImagePath = entity.ProfileImagePath,

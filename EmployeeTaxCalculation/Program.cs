@@ -30,6 +30,7 @@ builder.Services.AddScoped<IEmployeeRepository, EmployeeService>();
 builder.Services.AddScoped<IEmployeeSalaryDetailsRepository, EmployeeSalaryDetailsService>();
 builder.Services.AddScoped<IEmployeeInvestmentRepository, EmployeeInvestmentService>();
 builder.Services.AddScoped<ITaxCalculationRepository, TaxCalculationService>();
+builder.Services.AddScoped<ISectionRepository, SectionService>();
 
 // For Identity
 builder.Services.AddIdentity<User, IdentityRole>()
