@@ -57,7 +57,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 decimal? section80C = await CalculateSection80CAmount(empId);
                 decimal? hra = await CalculateHRADeduction(empId);
                 decimal? section80G = empInvestmentDetails
-                    .Where(e => e.SubSections.Section.SectionName == "Section80G")
+                    .Where(e => e.SubSections != null && e.SubSections.Section.SectionName == "Section80G")
                     .Sum(e => e.InvestedAmount);
 
                 decimal? taxableAmount = await TotalIncome(empId);

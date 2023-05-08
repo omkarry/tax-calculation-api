@@ -35,7 +35,7 @@ namespace EmployeeTaxCalculation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(string empId, [FromBody] List<EmployeeInvestmentDto> investmentDetails)
+        public async Task<IActionResult> Post([FromQuery]string empId, [FromBody] List<EmployeeInvestmentDto> investmentDetails)
         {
             try
             {

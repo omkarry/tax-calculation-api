@@ -36,7 +36,7 @@ namespace EmployeeTaxCalculation.Controllers
 
         [HttpGet]
         [Route("newRegime")]
-        public async Task<IActionResult> GetTaxByNewRegime(string empId)
+        public async Task<IActionResult> GetTaxByNewRegime([FromQuery]string empId)
         {
             try
             {
