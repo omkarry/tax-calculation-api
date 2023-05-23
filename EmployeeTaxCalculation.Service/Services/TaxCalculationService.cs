@@ -1,5 +1,4 @@
 ﻿using EmployeeTaxCalculation.Data.Models;
-using EmployeeTaxCalculation.Service.Constants;
 using EmployeeTaxCalculation.Service.Interfaces;
 using EmplyeeTaxCalculation.Data.Auth;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +28,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<decimal?> CalculateSection80CAmount(string empId)
         {
-            List<EmployeeInvestment>? empInvestmentDetails = await _dbContext.EmployeeInvestments.Where(s => s.EmployeeId == empId && s.SubSections.Section.SectionName == "Section80").ToListAsync();
+            List<EmployeeInvestment>? empInvestmentDetails = await _dbContext.EmployeeInvestments.Where(s => s.EmployeeId == empId && s.SubSections.Section.SectionName == "Section80C").ToListAsync();
 
             decimal? section80C = empInvestmentDetails.Select(s => s.InvestedAmount).Sum();
             return section80C;
@@ -230,5 +229,36 @@ namespace EmployeeTaxCalculation.Service.Services
                 }
             }
         }
+        //public async Task<decimal?> CalculateTaxByOldRegime(string EmpId)
+        //{
+        //    decimal? taxableAmount = await CalculateTaxableAmount(EmpId);
+        //    if (taxableAmount == null)
+        //        return null;
+        //    else
+        //    {
+        //        decimal? taxToBePaid = 0;
+        //        decimal? remainingAmount = taxableAmount;
+
+        //        foreach (var slab in Data.Constants.OldRegimeDetails.OldRegimeSlab)
+        //        {
+        //            if (remainingAmount <= 0)
+        //                break;
+
+        //            if (remainingAmount <= slab.Limit)
+        //            {
+        //                taxToBePaid += remainingAmount *
+        //                (decimal)(slab.PercentOfTax / 100);
+        //                break;
+        //            }
+        //            else
+        //            {
+        //                taxToBePaid += slab.Limit * (decimal)(slab.PercentOfTax / 100);
+        //                remainingAmount -= slab.Limit;
+        //            }
+        //        }
+
+        //        return taxToBePaid;
+        //    }
+        //}
     }
 }

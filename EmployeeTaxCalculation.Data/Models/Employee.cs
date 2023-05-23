@@ -21,7 +21,7 @@ namespace EmployeeTaxCalculation.Data.Models
 
         public virtual User User { get; set; }
 
-        public virtual SalaryDetails? SalaryDetails { get; set; }
+        public virtual ICollection<SalaryDetails> SalaryDetails { get; set; }
 
         public virtual ICollection<EmployeeInvestment> EmployeeInvestments { get; set; }
 

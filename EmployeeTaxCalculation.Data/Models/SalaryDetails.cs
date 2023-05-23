@@ -19,5 +19,8 @@ namespace EmployeeTaxCalculation.Data.Models
         [ForeignKey("Employee")]
         public string EmployeeId { get; set; }
         public Employee? Employee { get; set; }
+        [ForeignKey("FinantialYear")]
+        public string FinantialYearId { get; set; }
+        public FinancialYear? FinancialYear{ get; set; }
     }
 }

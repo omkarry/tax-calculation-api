@@ -1,11 +1,10 @@
-﻿using AutoMapper.Execution;
-using EmployeeTaxCalculation.Data.Auth;
-using EmployeeTaxCalculation.Data.DTOs;
+﻿using EmployeeTaxCalculation.Data.Auth;
 using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.DTOs;
 using EmployeeTaxCalculation.Service.Interfaces;
 using EmployeeTaxCalculation.Service.Mappers;
 using EmplyeeTaxCalculation.Data.Auth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,6 +29,15 @@ namespace EmployeeTaxCalculation.Service.Services
         public async Task<List<EmployeeDto>> GetEmployees()
         {
             List<Employee> employees = await _dbContext.Employees.Include(e => e.User).Where(e => e.IsActive == true).ToListAsync();
+            return employees.Select(e => EmployeeMapper.Map(e)).ToList();
+        }
+
+        public async Task<List<EmployeeDto>> GetEmployeesForPending()
+        {
+            List<Employee> employees = await _dbContext.Employees
+                .Include(e => e.User)
+                .Include(e => e.EmployeeInvestments)
+                .Where(e => e.EmployeeInvestments.Select(e => e.InvestedAmount).Sum() <= 0).ToListAsync();
             return employees.Select(e => EmployeeMapper.Map(e)).ToList();
         }
 
@@ -61,6 +69,7 @@ namespace EmployeeTaxCalculation.Service.Services
                     SecurityStamp = Guid.NewGuid().ToString(),
                     UserName = inputModel.Username,
                 };
+
                 IdentityResult result = await _userManager.CreateAsync(user, inputModel.Password);
 
                 if (!result.Succeeded)
@@ -150,6 +159,33 @@ namespace EmployeeTaxCalculation.Service.Services
             }
             else
                 return "0";
+        }
+        public async Task<bool?> UploadProfile(string username, string userId, IFormFile photo)
+        {
+            string folderName = Path.Combine("uploads", username);
+            string filePath = Path.Combine(folderName, photo.FileName);
+
+            if (!Directory.Exists(folderName))
+            {
+                Directory.CreateDirectory(folderName);
+            }
+
+            using (FileStream stream = new(filePath, FileMode.Create))
+            {
+                await photo.CopyToAsync(stream);
+            }
+
+            Employee? profile = await _dbContext.Employees.SingleOrDefaultAsync(p => p.Id == userId);
+
+            if (profile == null)
+            {
+                return null;
+            }
+
+            profile.ProfileImagePath = filePath;
+            await _dbContext.SaveChangesAsync();
+
+            return true;
         }
     }
 }

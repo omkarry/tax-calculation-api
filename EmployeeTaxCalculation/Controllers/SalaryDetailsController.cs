@@ -1,12 +1,14 @@
 ﻿using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.DTOs;
 using EmployeeTaxCalculation.Service.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeTaxCalculation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class SalaryDetailsController : ControllerBase
     {
         private readonly IEmployeeSalaryDetailsRepository _employee;

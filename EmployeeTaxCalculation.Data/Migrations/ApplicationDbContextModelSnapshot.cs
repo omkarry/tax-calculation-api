@@ -83,19 +83,67 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("FinantialYearId")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("InvestedAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("SubSectionId")
                         .HasColumnType("int");
 
+                    b.Property<int>("YearId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("SubSectionId");
+                    b.HasIndex("FinantialYearId");
+
+                    b.HasIndex("SubSectionId", "EmployeeId", "YearId")
+                        .IsUnique();
 
                     b.ToTable("EmployeeInvestments");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.FinancialYear", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("FinancialYearEndId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FinancialYearStartId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FinancialYearEndId");
+
+                    b.HasIndex("FinancialYearStartId", "FinancialYearEndId")
+                        .IsUnique();
+
+                    b.ToTable("FinancialYear");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.OldRegime", b =>
+                {
+                    b.Property<int>("FinancialYearId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OldRegimeYearId")
+                        .HasColumnType("int");
+
+                    b.HasKey("FinancialYearId");
+
+                    b.HasIndex("OldRegimeYearId");
+
+                    b.ToTable("OldRegime");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SalaryDetails", b =>
@@ -119,6 +167,13 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("FinancialYearId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FinantialYearId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<decimal>("HRA")
                         .HasColumnType("decimal(18,2)");
 
@@ -133,7 +188,9 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployeeId")
+                    b.HasIndex("FinancialYearId");
+
+                    b.HasIndex("EmployeeId", "FinantialYearId")
                         .IsUnique();
 
                     b.ToTable("SalaryDetails");
@@ -154,6 +211,33 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Sections");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Slab", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("FinantialYearId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Limit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<float>("PercentOfTax")
+                        .HasColumnType("real");
+
+                    b.Property<int>("SlabNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FinantialYearId");
+
+                    b.ToTable("Slab");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SubSections", b =>
@@ -179,6 +263,22 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.HasIndex("SectionId");
 
                     b.ToTable("SubSections");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Years", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Years");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -425,26 +525,88 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinantialYear")
+                        .WithMany("EmployeeInvestments")
+                        .HasForeignKey("FinantialYearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("EmployeeTaxCalculation.Data.Models.SubSections", "SubSections")
                         .WithMany("Investments")
                         .HasForeignKey("SubSectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Employee");
 
+                    b.Navigation("FinantialYear");
+
                     b.Navigation("SubSections");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.FinancialYear", b =>
+                {
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.Years", "FinancialYearEnd")
+                        .WithMany()
+                        .HasForeignKey("FinancialYearEndId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.Years", "FinancialYearStart")
+                        .WithMany("FinancialYears")
+                        .HasForeignKey("FinancialYearStartId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FinancialYearEnd");
+
+                    b.Navigation("FinancialYearStart");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.OldRegime", b =>
+                {
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
+                        .WithMany()
+                        .HasForeignKey("FinancialYearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "OldRegimeYear")
+                        .WithMany("OldRegimeDetails")
+                        .HasForeignKey("OldRegimeYearId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("FinancialYear");
+
+                    b.Navigation("OldRegimeYear");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SalaryDetails", b =>
                 {
                     b.HasOne("EmployeeTaxCalculation.Data.Models.Employee", "Employee")
-                        .WithOne("SalaryDetails")
-                        .HasForeignKey("EmployeeTaxCalculation.Data.Models.SalaryDetails", "EmployeeId")
+                        .WithMany("SalaryDetails")
+                        .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
+                        .WithMany()
+                        .HasForeignKey("FinancialYearId");
+
                     b.Navigation("Employee");
+
+                    b.Navigation("FinancialYear");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Slab", b =>
+                {
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinantialYear")
+                        .WithMany("Slabs")
+                        .HasForeignKey("FinantialYearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FinantialYear");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SubSections", b =>
@@ -516,6 +678,15 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.Navigation("SalaryDetails");
                 });
 
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.FinancialYear", b =>
+                {
+                    b.Navigation("EmployeeInvestments");
+
+                    b.Navigation("OldRegimeDetails");
+
+                    b.Navigation("Slabs");
+                });
+
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Section", b =>
                 {
                     b.Navigation("SubSections");
@@ -524,6 +695,11 @@ namespace EmployeeTaxCalculation.Data.Migrations
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SubSections", b =>
                 {
                     b.Navigation("Investments");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Years", b =>
+                {
+                    b.Navigation("FinancialYears");
                 });
 #pragma warning restore 612, 618
         }

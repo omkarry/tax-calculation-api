@@ -1,5 +1,6 @@
 ﻿using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace EmployeeTaxCalculation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TaxCalculationController : ControllerBase
     {
         public readonly ITaxCalculationRepository _employee;

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace EmployeeTaxCalculation.Data.Migrations
 {
-    public partial class Initial_Migration : Migration
+    public partial class InitialMigration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -60,6 +60,19 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Sections", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Years",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Year = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Years", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -204,8 +217,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         name: "FK_Employees_AspNetUsers_UpdatedById",
                         column: x => x.UpdatedById,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -230,29 +242,29 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SalaryDetails",
+                name: "FinancialYear",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    BasicPay = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    HRA = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ConveyanceAllowance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    MedicalAllowance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    OtherAllowance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    EPF = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ProfessionalTax = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    EmployeeId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    FinancialYearStartId = table.Column<int>(type: "int", nullable: false),
+                    FinancialYearEndId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SalaryDetails", x => x.Id);
+                    table.PrimaryKey("PK_FinancialYear", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SalaryDetails_Employees_EmployeeId",
-                        column: x => x.EmployeeId,
-                        principalTable: "Employees",
+                        name: "FK_FinancialYear_Years_FinancialYearEndId",
+                        column: x => x.FinancialYearEndId,
+                        principalTable: "Years",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_FinancialYear_Years_FinancialYearStartId",
+                        column: x => x.FinancialYearStartId,
+                        principalTable: "Years",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -263,6 +275,8 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SubSectionId = table.Column<int>(type: "int", nullable: false),
                     EmployeeId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    YearId = table.Column<int>(type: "int", nullable: false),
+                    FinantialYearId = table.Column<int>(type: "int", nullable: false),
                     InvestedAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
                 },
                 constraints: table =>
@@ -275,11 +289,96 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
+                        name: "FK_EmployeeInvestments_FinancialYear_FinantialYearId",
+                        column: x => x.FinantialYearId,
+                        principalTable: "FinancialYear",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_EmployeeInvestments_SubSections_SubSectionId",
                         column: x => x.SubSectionId,
                         principalTable: "SubSections",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OldRegime",
+                columns: table => new
+                {
+                    FinancialYearId = table.Column<int>(type: "int", nullable: false),
+                    OldRegimeYearId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OldRegime", x => x.FinancialYearId);
+                    table.ForeignKey(
+                        name: "FK_OldRegime_FinancialYear_FinancialYearId",
+                        column: x => x.FinancialYearId,
+                        principalTable: "FinancialYear",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OldRegime_FinancialYear_OldRegimeYearId",
+                        column: x => x.OldRegimeYearId,
+                        principalTable: "FinancialYear",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SalaryDetails",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    BasicPay = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    HRA = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ConveyanceAllowance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    MedicalAllowance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    OtherAllowance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    EPF = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ProfessionalTax = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    EmployeeId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FinantialYearId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FinancialYearId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SalaryDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SalaryDetails_Employees_EmployeeId",
+                        column: x => x.EmployeeId,
+                        principalTable: "Employees",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SalaryDetails_FinancialYear_FinancialYearId",
+                        column: x => x.FinancialYearId,
+                        principalTable: "FinancialYear",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Slab",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SlabNumber = table.Column<int>(type: "int", nullable: false),
+                    Limit = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PercentOfTax = table.Column<float>(type: "real", nullable: false),
+                    FinantialYearId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Slab", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Slab_FinancialYear_FinantialYearId",
+                        column: x => x.FinantialYearId,
+                        principalTable: "FinancialYear",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -327,9 +426,15 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 column: "EmployeeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmployeeInvestments_SubSectionId",
+                name: "IX_EmployeeInvestments_FinantialYearId",
                 table: "EmployeeInvestments",
-                column: "SubSectionId");
+                column: "FinantialYearId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmployeeInvestments_SubSectionId_EmployeeId_YearId",
+                table: "EmployeeInvestments",
+                columns: new[] { "SubSectionId", "EmployeeId", "YearId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Employees_CreatedById",
@@ -342,10 +447,36 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 column: "UpdatedById");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SalaryDetails_EmployeeId",
-                table: "SalaryDetails",
-                column: "EmployeeId",
+                name: "IX_FinancialYear_FinancialYearEndId",
+                table: "FinancialYear",
+                column: "FinancialYearEndId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FinancialYear_FinancialYearStartId_FinancialYearEndId",
+                table: "FinancialYear",
+                columns: new[] { "FinancialYearStartId", "FinancialYearEndId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OldRegime_OldRegimeYearId",
+                table: "OldRegime",
+                column: "OldRegimeYearId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalaryDetails_EmployeeId_FinantialYearId",
+                table: "SalaryDetails",
+                columns: new[] { "EmployeeId", "FinantialYearId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalaryDetails_FinancialYearId",
+                table: "SalaryDetails",
+                column: "FinancialYearId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Slab_FinantialYearId",
+                table: "Slab",
+                column: "FinantialYearId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubSections_SectionId",
@@ -374,7 +505,13 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 name: "EmployeeInvestments");
 
             migrationBuilder.DropTable(
+                name: "OldRegime");
+
+            migrationBuilder.DropTable(
                 name: "SalaryDetails");
+
+            migrationBuilder.DropTable(
+                name: "Slab");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
@@ -386,10 +523,16 @@ namespace EmployeeTaxCalculation.Data.Migrations
                 name: "Employees");
 
             migrationBuilder.DropTable(
+                name: "FinancialYear");
+
+            migrationBuilder.DropTable(
                 name: "Sections");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Years");
         }
     }
 }
