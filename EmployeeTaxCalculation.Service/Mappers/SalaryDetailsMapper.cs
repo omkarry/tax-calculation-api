@@ -17,7 +17,8 @@ namespace EmployeeTaxCalculation.Service.Mappers
                 OtherAllowance = entity.OtherAllowance,
                 EPF = entity.EPF,
                 ProfessionalTax = entity.ProfessionalTax,
-                EmployeeId = entity.EmployeeId
+                EmployeeId = entity.EmployeeId,
+                FinancialYearId = entity.FinancialYearId
             };
         }
 

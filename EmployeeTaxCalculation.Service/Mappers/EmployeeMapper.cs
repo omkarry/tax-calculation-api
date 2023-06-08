@@ -15,7 +15,7 @@ namespace EmployeeTaxCalculation.Service.Mappers
                 Username = entity.User.UserName,
                 DOB = entity.DOB,
                 Gender = entity.Gender,
-                ProfileImagePath = entity.ProfileImagePath,
+                ProfileImageBytes = File.ReadAllBytes(entity.ProfileImagePath),
                 IsActive = entity.IsActive
             };
         }

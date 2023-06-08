@@ -129,7 +129,7 @@ namespace EmployeeTaxCalculation.Controllers
                     return Ok(new ApiResponse<bool> { StatusCode = 200, Result = false });
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex)    
             {
                 return StatusCode(500, ex.Message);
             }
@@ -139,7 +139,7 @@ namespace EmployeeTaxCalculation.Controllers
         {
             SymmetricSecurityKey authSigningKey = new(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
-            JwtSecurityToken token = new JwtSecurityToken(
+            JwtSecurityToken token = new(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
                 expires: DateTime.Now.AddHours(3),

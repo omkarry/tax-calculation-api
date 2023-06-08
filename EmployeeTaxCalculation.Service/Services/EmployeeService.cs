@@ -1,4 +1,5 @@
 ﻿using EmployeeTaxCalculation.Data.Auth;
+using EmployeeTaxCalculation.Data.DTOs;
 using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.DTOs;
 using EmployeeTaxCalculation.Service.Interfaces;
@@ -32,6 +33,14 @@ namespace EmployeeTaxCalculation.Service.Services
             return employees.Select(e => EmployeeMapper.Map(e)).ToList();
         }
 
+        public async Task<List<EmployeeDetailsDto>?> GetEmpoyeesDetails()
+        {
+            List<Employee> employees = await _dbContext.Employees
+                .Include(e => e.User)
+                .Where(e => e.IsActive).ToListAsync();
+            return employees.Select(e => EmployeeDetailsMapper.Map(e)).ToList();
+        }
+
         public async Task<List<EmployeeDto>> GetEmployeesForPending()
         {
             List<Employee> employees = await _dbContext.Employees
@@ -53,7 +62,7 @@ namespace EmployeeTaxCalculation.Service.Services
             return null;
         }
 
-        public async Task<string> RegisterEmployee(string userId, EmployeeSalaryDto inputModel)
+        public async Task<string> RegisterEmployee(string userId, RegisterDto inputModel)
         {
             try
             {
@@ -63,7 +72,7 @@ namespace EmployeeTaxCalculation.Service.Services
                     return "0";
                 }
 
-                User user = new User()
+                User user = new()
                 {
                     Email = inputModel.Email,
                     SecurityStamp = Guid.NewGuid().ToString(),
@@ -97,20 +106,20 @@ namespace EmployeeTaxCalculation.Service.Services
                     CreatedById = userId,
                     IsActive = true
                 };
-                SalaryDetails empSalaryDetails = new()
-                {
-                    Id = 0,
-                    BasicPay = inputModel.SalaryDetails.BasicPay,
-                    HRA = inputModel.SalaryDetails.HRA,
-                    ConveyanceAllowance = inputModel.SalaryDetails.ConveyanceAllowance,
-                    MedicalAllowance = inputModel.SalaryDetails.MedicalAllowance,
-                    OtherAllowance = inputModel.SalaryDetails.OtherAllowance,
-                    EPF = inputModel.SalaryDetails.EPF,
-                    ProfessionalTax = inputModel.SalaryDetails.ProfessionalTax,
-                    EmployeeId = user.Id
-                };
+                //SalaryDetails empSalaryDetails = new()
+                //{
+                //    Id = 0,
+                //    BasicPay = inputModel.SalaryDetails.BasicPay,
+                //    HRA = inputModel.SalaryDetails.HRA,
+                //    ConveyanceAllowance = inputModel.SalaryDetails.ConveyanceAllowance,
+                //    MedicalAllowance = inputModel.SalaryDetails.MedicalAllowance,
+                //    OtherAllowance = inputModel.SalaryDetails.OtherAllowance,
+                //    EPF = inputModel.SalaryDetails.EPF,
+                //    ProfessionalTax = inputModel.SalaryDetails.ProfessionalTax,
+                //    EmployeeId = user.Id
+                //};
                 _dbContext.Employees.Add(newEmployee);
-                _dbContext.SalaryDetails.Add(empSalaryDetails);
+                //_dbContext.SalaryDetails.Add(empSalaryDetails);
                 await _dbContext.SaveChangesAsync();
                 return user.Id;
             }
@@ -135,9 +144,6 @@ namespace EmployeeTaxCalculation.Service.Services
 
                 if (!string.IsNullOrEmpty(updatedEmployee.DOB.ToString()))
                     employee.DOB = updatedEmployee.DOB;
-
-                if (!string.IsNullOrEmpty(updatedEmployee.ProfileImagePath))
-                    employee.ProfileImagePath = updatedEmployee.ProfileImagePath;
 
                 await _dbContext.SaveChangesAsync();
                 return employee.Id;

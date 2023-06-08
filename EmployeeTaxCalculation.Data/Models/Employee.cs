@@ -24,6 +24,7 @@ namespace EmployeeTaxCalculation.Data.Models
         public virtual ICollection<SalaryDetails> SalaryDetails { get; set; }
 
         public virtual ICollection<EmployeeInvestment> EmployeeInvestments { get; set; }
+        public virtual ICollection<TaxDetails> TaxDetails { get; set; }
 
         [ForeignKey("CreatedBy")]
         public string? CreatedById { get; set; }

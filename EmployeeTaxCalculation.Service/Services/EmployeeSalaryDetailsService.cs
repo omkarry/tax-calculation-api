@@ -23,7 +23,9 @@ namespace EmployeeTaxCalculation.Service.Services
         {
             try
             {
-                SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == salaryDetails.EmployeeId);
+                SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails
+                                                        .FirstOrDefaultAsync(s => s.EmployeeId == salaryDetails.EmployeeId
+                                                        && s.FinancialYearId == salaryDetails.FinancialYearId);
                 if (empWithSalaryExist == null)
                 {
                     SalaryDetails? newSalaryDetails = new()
@@ -35,7 +37,8 @@ namespace EmployeeTaxCalculation.Service.Services
                         OtherAllowance = salaryDetails.MedicalAllowance,
                         EPF = salaryDetails.EPF,
                         ProfessionalTax = salaryDetails.ProfessionalTax,
-                        EmployeeId = salaryDetails.EmployeeId
+                        EmployeeId = salaryDetails.EmployeeId,
+                        FinancialYearId = salaryDetails.FinancialYearId
                     };
                     _dbContext.SalaryDetails.Add(newSalaryDetails);
                     await _dbContext.SaveChangesAsync();
@@ -44,7 +47,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 else
                     return 1;
             }
-            catch(Exception ex)
+            catch (Exception)
             {
                 return (-1);
             }
@@ -62,12 +65,24 @@ namespace EmployeeTaxCalculation.Service.Services
             return false;
         }
 
-        public async Task<SalaryDetailsDto?> GetSalaryDetailsById(string id)
+        public async Task<List<SalaryDetailsDto>?> GetSalaryDetails(string id)
         {
-            SalaryDetails? empWithSalaryExist = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == id);
-            if (empWithSalaryExist != null)
+            List<SalaryDetails> employeeSalaryDetails= await _dbContext.SalaryDetails
+                                                            .Where(s => s.EmployeeId == id).ToListAsync();
+            if (employeeSalaryDetails.Count != 0)
             {
-                return SalaryDetailsMapper.Map(empWithSalaryExist);
+                return employeeSalaryDetails.Select(e => SalaryDetailsMapper.Map(e)).ToList();
+            }
+            return null;
+        }
+
+        public async Task<SalaryDetailsDto?> GetSalaryDetailsByYear(string id, int yearId)
+        {
+            SalaryDetails? employeeSalaryDetails = await _dbContext.SalaryDetails
+                                                            .FirstOrDefaultAsync(s => s.EmployeeId == id && s.FinancialYearId == yearId);
+            if (employeeSalaryDetails != null)
+            {
+                return SalaryDetailsMapper.Map(employeeSalaryDetails);
             }
             return null;
         }
@@ -85,6 +100,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 empWithSalaryExist.EPF = updatedSalaryDetails.EPF;
                 empWithSalaryExist.ProfessionalTax = updatedSalaryDetails.ProfessionalTax;
                 empWithSalaryExist.EmployeeId = updatedSalaryDetails.EmployeeId;
+                
                 _dbContext.SalaryDetails.Update(empWithSalaryExist);
                 await _dbContext.SaveChangesAsync();
                 return empWithSalaryExist.Id;

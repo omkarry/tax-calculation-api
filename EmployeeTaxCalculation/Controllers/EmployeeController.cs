@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using EmployeeTaxCalculation.Data.DTOs;
 
 namespace EmployeeTaxCalculation.Controllers
 {
@@ -32,6 +33,24 @@ namespace EmployeeTaxCalculation.Controllers
                 return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
             }
             catch ( Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("employees")]
+        public async Task<IActionResult> GetEmployeesDetails()
+        {
+            try
+            {
+                List<EmployeeDetailsDto>? result = await _employee.GetEmpoyeesDetails();
+                if (result != null)
+                {
+                    return Ok(new ApiResponse<Object> { StatusCode = 200, Message = "List of Employees", Result = result });
+                }
+                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
+            }
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
@@ -74,11 +93,12 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
-        [HttpPost("add/{userId}")]
-        public async Task<IActionResult> Post(string userId, [FromBody] EmployeeSalaryDto inputModel)
+        [HttpPost("AddEmployee")]
+        public async Task<IActionResult> Post([FromBody] RegisterDto inputModel)
         {
             try
             {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 string result = await _employee.RegisterEmployee(userId, inputModel);
 
                 if (result.Equals("0"))

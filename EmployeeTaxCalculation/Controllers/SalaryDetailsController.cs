@@ -17,12 +17,13 @@ namespace EmployeeTaxCalculation.Controllers
             _employee = employee;
         }
 
+        [Authorize(Roles = "Admin, Employee")]
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(string id)
+        public async Task<IActionResult> Get(string id, int yearId)
         {
             try
             {
-                SalaryDetailsDto? result = await _employee.GetSalaryDetailsById(id);
+                SalaryDetailsDto? result = await _employee.GetSalaryDetailsByYear(id, yearId);
                 if (result != null)
                 {
                     return Ok(new ApiResponse<SalaryDetailsDto> { StatusCode = 200, Message = "Employee's Salary Details", Result = result });
@@ -35,6 +36,7 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] SalaryDetailsDto salaryDetails)
         {
@@ -56,6 +58,8 @@ namespace EmployeeTaxCalculation.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] SalaryDetailsDto updatedSalary)
         {
@@ -77,6 +81,7 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

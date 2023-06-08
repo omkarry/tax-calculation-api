@@ -34,4 +34,33 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
     }
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class RegimeController : ControllerBase
+    {
+        public readonly ISectionRepository _subSectionRepository;
+        public RegimeController(ISectionRepository subSectionRepository)
+        {
+            _subSectionRepository = subSectionRepository;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            try
+            {
+                List<SectionDto>? result = await _subSectionRepository.GetSections();
+                if (result != null)
+                {
+                    return Ok(new ApiResponse<List<SectionDto>> { StatusCode = 200, Message = "List of SubSections", Result = result });
+                }
+                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No data available" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+    }
 }

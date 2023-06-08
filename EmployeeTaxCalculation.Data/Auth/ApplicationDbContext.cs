@@ -17,6 +17,11 @@ namespace EmplyeeTaxCalculation.Data.Auth
         public DbSet<Section> Sections { get; set; }
         public DbSet<SubSections> SubSections { get; set; }
         public DbSet<EmployeeInvestment> EmployeeInvestments { get; set; }
+        public DbSet<Years> Years { get; set; }
+        public DbSet<FinancialYear> FinancialYear { get; set; }
+        public DbSet<TaxDetails> TaxDetails { get; set; }
+        public DbSet<Slab> Slab { get; set; }
+        public DbSet<OldRegime> OldRegime { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,11 +54,15 @@ namespace EmplyeeTaxCalculation.Data.Auth
                 .IsUnique();
 
             modelBuilder.Entity<SalaryDetails>()
-                .HasIndex(s => new { s.EmployeeId, s.FinantialYearId })
+                .HasIndex(s => new { s.EmployeeId, s.FinancialYearId })
                 .IsUnique();
 
             modelBuilder.Entity<EmployeeInvestment>()
-                .HasIndex(e => new { e.SubSectionId, e.EmployeeId, e.YearId})
+                .HasIndex(e => new { e.SubSectionId, e.EmployeeId, e.YearId })
+                .IsUnique();
+
+            modelBuilder.Entity<TaxDetails>()
+                .HasIndex(e => new { e.EmployeeId, e.FinancialYearId, e.RegimeType})
                 .IsUnique();
 
             modelBuilder.Entity<Employee>()
@@ -75,6 +84,10 @@ namespace EmplyeeTaxCalculation.Data.Auth
 
             modelBuilder.Entity<Employee>()
                 .HasMany(e => e.SalaryDetails)
+                .WithOne(e => e.Employee);
+            
+            modelBuilder.Entity<Employee>()
+                .HasMany(e => e.TaxDetails)
                 .WithOne(e => e.Employee);
 
             modelBuilder.Entity<Section>()
@@ -126,6 +139,12 @@ namespace EmplyeeTaxCalculation.Data.Auth
                 .WithMany()
                 .HasForeignKey(fy => fy.FinancialYearEndId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FinancialYear>()
+                .HasMany(fy => fy.TaxDetails)
+                .WithOne(y => y.FinancialYear)
+                .HasForeignKey(y => y.FinancialYearId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

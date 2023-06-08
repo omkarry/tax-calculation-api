@@ -20,5 +20,6 @@ namespace EmployeeTaxCalculation.Service.DTOs
         public decimal EPF { get; set; }
         public decimal ProfessionalTax { get; set; }
         public string EmployeeId { get; set; }
+        public int FinancialYearId { get; set; }
     }
 }

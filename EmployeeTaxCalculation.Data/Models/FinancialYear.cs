@@ -17,6 +17,7 @@ namespace EmployeeTaxCalculation.Data.Models
         public Years FinancialYearEnd { get; set; }
         public ICollection<EmployeeInvestment> EmployeeInvestments { get; set; }
         public ICollection<OldRegime> OldRegimeDetails { get; set; }
-        public List<Slab> Slabs { get; set; }
+        public ICollection<Slab> Slabs { get; set; }
+        public ICollection<TaxDetails> TaxDetails { get; set; }
     }
 }
