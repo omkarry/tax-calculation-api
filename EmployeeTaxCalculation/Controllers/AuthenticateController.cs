@@ -40,14 +40,13 @@ namespace EmployeeTaxCalculation.Controllers
                 List<Claim> authClaims = new()
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Sid, user.Id)
                 };
 
                 foreach (string userRole in userRoles)
                 {
                     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
                 }
-
                 JwtSecurityToken token = GetToken(authClaims);
 
                 return Ok(new

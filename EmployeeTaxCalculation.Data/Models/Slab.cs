@@ -8,7 +8,7 @@ namespace EmployeeTaxCalculation.Data.Models
         [Key]
         public int Id { get; set; }
         public int SlabNumber { get; set; }
-        public decimal Limit { get; set; }
+        public decimal MaxLimit { get; set; }
         public float PercentOfTax { get; set; }
         [ForeignKey("FinantialYear")]
         public int FinantialYearId { get; set; }

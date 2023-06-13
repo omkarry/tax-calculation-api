@@ -29,7 +29,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 {
                     Id = 0,
                     SlabNumber = e.SlabNumber,
-                    Limit = e.SlabNumber,
+                    MaxLimit = e.SlabNumber,
                     PercentOfTax = e.PercentOfTax,
                     FinantialYearId = yearId
                 }).ToList();
@@ -43,7 +43,7 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<List<FinancialYearDto>> GetFinancialYears()
         {
-            var years = await _dbContext.FinancialYear
+            List<FinancialYear> years = await _dbContext.FinancialYear
                             .Include(y => y.FinancialYearStart)
                             .Include(y => y.FinancialYearEnd)
                             .ToListAsync();

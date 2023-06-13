@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using EmployeeTaxCalculation.Data.DTOs;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace EmployeeTaxCalculation.Controllers
 {
@@ -15,30 +16,32 @@ namespace EmployeeTaxCalculation.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeRepository _employee;
-        public EmployeeController(IEmployeeRepository employee)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public EmployeeController(IEmployeeRepository employee, IHttpContextAccessor httpContextAccessor)
         {
             _employee = employee;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            try
-            {
-                List<EmployeeDto> result = await _employee.GetEmployees();
-                if (result != null)
-                {
-                    return Ok(new ApiResponse<List<EmployeeDto>> { StatusCode = 200, Message = "List of Employees", Result = result });
-                }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
-            }
-            catch ( Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
+        //[HttpGet]
+        //public async Task<IActionResult> Get()
+        //{
+        //    try
+        //    {
+        //        List<EmployeeDto> result = await _employee.GetEmployees();
+        //        if (result != null)
+        //        {
+        //            return Ok(new ApiResponse<List<EmployeeDto>> { StatusCode = 200, Message = "List of Employees", Result = result });
+        //        }
+        //        return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
+        //    }
+        //    catch ( Exception ex)
+        //    {
+        //        return StatusCode(500, ex.Message);
+        //    }
+        //}
 
-        [HttpGet("employees")]
+        [HttpGet("Employees")]
         public async Task<IActionResult> GetEmployeesDetails()
         {
             try
@@ -74,8 +77,8 @@ namespace EmployeeTaxCalculation.Controllers
         //    }
         //}
 
-        [Authorize]
-        [HttpGet("{id}")]
+        [HttpGet]
+        [Route("{id}")]
         public async Task<IActionResult> Get(string id)
         {
             try
@@ -98,7 +101,8 @@ namespace EmployeeTaxCalculation.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                //string userId = User.FindFirstValue(ClaimTypes.Sid);
+                string? userId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Sid);
                 string result = await _employee.RegisterEmployee(userId, inputModel);
 
                 if (result.Equals("0"))

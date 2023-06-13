@@ -29,7 +29,9 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<List<EmployeeDto>> GetEmployees()
         {
-            List<Employee> employees = await _dbContext.Employees.Include(e => e.User).Where(e => e.IsActive == true).ToListAsync();
+            List<Employee> employees = await _dbContext.Employees
+                .Include(e => e.User)
+                .Where(e => e.IsActive).ToListAsync();
             return employees.Select(e => EmployeeMapper.Map(e)).ToList();
         }
 
@@ -64,68 +66,62 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<string> RegisterEmployee(string userId, RegisterDto inputModel)
         {
-            try
+            using (var dbcxtransaction = _dbContext.Database.BeginTransaction())
             {
-                User userExists = await _userManager.FindByNameAsync(inputModel.Username);
-                if (userExists != null)
+                try
                 {
-                    return "0";
+
+                    User userExists = await _userManager.FindByNameAsync(inputModel.Username);
+                    if (userExists != null)
+                    {
+                        return "0";
+                    }
+
+                    User user = new()
+                    {
+                        Email = inputModel.Email,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                        UserName = inputModel.Username,
+                    };
+
+                    IdentityResult result = await _userManager.CreateAsync(user, inputModel.Password);
+
+                    if (!result.Succeeded)
+                    {
+                        return "-1";
+                    }
+
+                    bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
+
+                    if (!roleExist)
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
+                        await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                    }
+
+                    Employee newEmployee = new()
+                    {
+                        Id = user.Id,
+                        Name = inputModel.Name!,
+                        CreatedAt = DateTime.Now,
+                        CreatedById = userId,
+                        IsActive = true
+                    };
+
+                    _dbContext.Employees.Add(newEmployee);
+                    await _dbContext.SaveChangesAsync();
+                    await dbcxtransaction.CommitAsync();
+                    return user.Id;
                 }
-
-                User user = new()
+                catch (Exception ex)
                 {
-                    Email = inputModel.Email,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    UserName = inputModel.Username,
-                };
-
-                IdentityResult result = await _userManager.CreateAsync(user, inputModel.Password);
-
-                if (!result.Succeeded)
-                {
-                    return "-1";
+                    await dbcxtransaction.RollbackAsync();
+                    return ex.Message;
                 }
-
-                bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
-
-                if (!roleExist)
-                {
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
-                    await _userManager.AddToRoleAsync(user, UserRoles.Employee);
-                }
-                else
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Employee);
-                }
-
-                Employee newEmployee = new()
-                {
-                    Id = user.Id,
-                    Name = inputModel.Name,
-                    CreatedAt = DateTime.Now,
-                    CreatedById = userId,
-                    IsActive = true
-                };
-                //SalaryDetails empSalaryDetails = new()
-                //{
-                //    Id = 0,
-                //    BasicPay = inputModel.SalaryDetails.BasicPay,
-                //    HRA = inputModel.SalaryDetails.HRA,
-                //    ConveyanceAllowance = inputModel.SalaryDetails.ConveyanceAllowance,
-                //    MedicalAllowance = inputModel.SalaryDetails.MedicalAllowance,
-                //    OtherAllowance = inputModel.SalaryDetails.OtherAllowance,
-                //    EPF = inputModel.SalaryDetails.EPF,
-                //    ProfessionalTax = inputModel.SalaryDetails.ProfessionalTax,
-                //    EmployeeId = user.Id
-                //};
-                _dbContext.Employees.Add(newEmployee);
-                //_dbContext.SalaryDetails.Add(empSalaryDetails);
-                await _dbContext.SaveChangesAsync();
-                return user.Id;
-            }
-            catch (Exception ex)
-            {
-                return ex.Message;
             }
         }
 
@@ -166,6 +162,7 @@ namespace EmployeeTaxCalculation.Service.Services
             else
                 return "0";
         }
+
         public async Task<bool?> UploadProfile(string username, string userId, IFormFile photo)
         {
             string folderName = Path.Combine("uploads", username);

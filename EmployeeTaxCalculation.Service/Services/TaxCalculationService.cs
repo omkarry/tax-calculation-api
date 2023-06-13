@@ -148,7 +148,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 if (remainingAmount <= 0)
                     break;
 
-                if (remainingAmount <= slab.Limit)
+                if (remainingAmount <= slab.MaxLimit)
                 {
                     taxToBePaid += remainingAmount *
                     (decimal)(slab.PercentOfTax / 100);
@@ -156,15 +156,15 @@ namespace EmployeeTaxCalculation.Service.Services
                 }
                 else
                 {
-                    if (slab.Limit == 0)
+                    if (slab.MaxLimit == 0)
                     {
                         taxToBePaid += remainingAmount * (decimal)(slab.PercentOfTax / 100);
                         break;
                     }
                     else
                     {
-                        taxToBePaid += slab.Limit * (decimal)(slab.PercentOfTax / 100);
-                        remainingAmount -= slab.Limit;
+                        taxToBePaid += slab.MaxLimit * (decimal)(slab.PercentOfTax / 100);
+                        remainingAmount -= slab.MaxLimit;
                     }
                 }
             }

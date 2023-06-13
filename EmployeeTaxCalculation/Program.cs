@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,9 @@ builder.Services.AddCors(o => o.AddPolicy("ReactPolicy", builder =>
 // For Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlite("name=ConnectionStrings:SQLiteConnection"));
+
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -37,6 +41,10 @@ builder.Services.AddScoped<ISectionRepository, SectionService>();
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.Configure<IdentityOptions>(options =>
+    options.ClaimsIdentity.UserIdClaimType = ClaimTypes.NameIdentifier);
+
 
 // Adding Authentication
 builder.Services.AddAuthentication(options =>
