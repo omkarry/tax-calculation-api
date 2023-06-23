@@ -108,12 +108,12 @@ namespace EmplyeeTaxCalculation.Data.Auth
 
             modelBuilder.Entity<FinancialYear>()
                 .HasMany(c => c.Slabs)
-                .WithOne(c => c.FinantialYear)
+                .WithOne(c => c.FinancialYear)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<FinancialYear>()
                .HasMany(c => c.EmployeeInvestments)
-               .WithOne(c => c.FinantialYear)
+               .WithOne(c => c.FinancialYear)
                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OldRegime>()

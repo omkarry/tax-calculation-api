@@ -6,13 +6,15 @@ namespace EmployeeTaxCalculation.Service.Interfaces
 {
     public interface IEmployeeRepository
     {
-        public Task<List<EmployeeDto>> GetEmployees();
-        public Task<List<EmployeeDetailsDto>?> GetEmpoyeesDetails();
-        public Task<List<EmployeeDto>> GetEmployeesForPending();
+        public Task<List<EmployeeNames>> GetEmployeeNames();
+        public Task<List<EmployeeDetailsDto>> GetEmployeesDetails();
         public Task<EmployeeDto?> GetEmployeeById(string id);
-        public Task<string> RegisterEmployee(string userId, RegisterDto inputModel);
-        public Task<string?> UpdateEmployee(string id, EmployeeDto updatedEmployee);
-        public Task<string> DeleteEmployee(string id);
-        public Task<bool?> UploadProfile(string username, string userId, IFormFile photo);
+        public Task<bool> RegisterEmployee(string userId, RegisterDto inputModel);
+        public Task<bool> UpdateEmployee(string userId, string empId, UpdateEmployeeDto updatedEmployee);
+        public Task<bool> DeleteEmployee(string id);
+        public Task<bool> UploadProfilePhoto(string username, string userId, IFormFile photo);
+        public Task<bool> RemoveProfilePhoto(string id);
+
+        public Task<CountDto> GetCount();
     }
 }

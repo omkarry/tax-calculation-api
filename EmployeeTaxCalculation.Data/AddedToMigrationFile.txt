@@ -1,0 +1,3 @@
+string sqlScriptPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "EmployeeTaxCalculation.Data", "SectionValues.sql");
+string sqlScript = System.IO.File.ReadAllText(sqlScriptPath);
+migrationBuilder.Sql(sqlScript);

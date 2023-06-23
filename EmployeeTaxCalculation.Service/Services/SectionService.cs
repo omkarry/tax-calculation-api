@@ -21,8 +21,20 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<List<SectionDto>?> GetSections()
         {
-            List<Section> sections = await _dbContext.Sections.Include(s => s.SubSections).ToListAsync();
-            return sections.Select(e => SectionMapper.Map(e)).ToList();
+            return await _dbContext.Sections.Include(s => s.SubSections).Select(e => SectionMapper.Map(e)).ToListAsync();
+        }
+
+        public async Task<bool> UpdateSubSectionLimit(int subSectionId, decimal limit)
+        {
+            SubSections? subSection = await _dbContext.SubSections.FirstOrDefaultAsync(e => e.Id == subSectionId);
+            if (subSection != null)
+            {
+                subSection.MaxLimit = limit;
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            else
+                return false;
         }
     }
 }

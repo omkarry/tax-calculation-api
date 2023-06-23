@@ -10,8 +10,8 @@ namespace EmployeeTaxCalculation.Data.Models
         public int SlabNumber { get; set; }
         public decimal MaxLimit { get; set; }
         public float PercentOfTax { get; set; }
-        [ForeignKey("FinantialYear")]
-        public int FinantialYearId { get; set; }
-        public FinancialYear FinantialYear { get; set; }
+        [ForeignKey("FinancialYear")]
+        public int FinancialYearId { get; set; }
+        public FinancialYear FinancialYear { get; set; }
     }
 }

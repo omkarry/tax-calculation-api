@@ -17,7 +17,8 @@ namespace EmployeeTaxCalculation.Service.Mappers
                 Id = entity.Id,
                 SubSectionId = entity.SubSectionId,
                 InvestedAmount = entity.InvestedAmount,
-                EmployeeId = entity.EmployeeId
+                EmployeeId = entity.EmployeeId,
+                YearId = entity.YearId
             };
         }
     }

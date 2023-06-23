@@ -83,7 +83,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("FinantialYearId")
+                    b.Property<int>("FinancialYearId")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("InvestedAmount")
@@ -99,7 +99,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("FinantialYearId");
+                    b.HasIndex("FinancialYearId");
 
                     b.HasIndex("SubSectionId", "EmployeeId", "YearId")
                         .IsUnique();
@@ -217,10 +217,10 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("FinantialYearId")
+                    b.Property<int>("FinancialYearId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Limit")
+                    b.Property<decimal>("MaxLimit")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<float>("PercentOfTax")
@@ -231,7 +231,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FinantialYearId");
+                    b.HasIndex("FinancialYearId");
 
                     b.ToTable("Slab");
                 });
@@ -552,9 +552,9 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinantialYear")
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
                         .WithMany("EmployeeInvestments")
-                        .HasForeignKey("FinantialYearId")
+                        .HasForeignKey("FinancialYearId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -566,7 +566,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.Navigation("Employee");
 
-                    b.Navigation("FinantialYear");
+                    b.Navigation("FinancialYear");
 
                     b.Navigation("SubSections");
                 });
@@ -629,13 +629,13 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Slab", b =>
                 {
-                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinantialYear")
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
                         .WithMany("Slabs")
-                        .HasForeignKey("FinantialYearId")
+                        .HasForeignKey("FinancialYearId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("FinantialYear");
+                    b.Navigation("FinancialYear");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SubSections", b =>

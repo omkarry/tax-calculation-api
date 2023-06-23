@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmployeeTaxCalculation.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230522132908_InitialMigration")]
+    [Migration("20230615060114_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -85,7 +85,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("FinantialYearId")
+                    b.Property<int>("FinancialYearId")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("InvestedAmount")
@@ -101,7 +101,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("FinantialYearId");
+                    b.HasIndex("FinancialYearId");
 
                     b.HasIndex("SubSectionId", "EmployeeId", "YearId")
                         .IsUnique();
@@ -169,12 +169,8 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("FinancialYearId")
+                    b.Property<int>("FinancialYearId")
                         .HasColumnType("int");
-
-                    b.Property<string>("FinantialYearId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal>("HRA")
                         .HasColumnType("decimal(18,2)");
@@ -192,7 +188,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasIndex("FinancialYearId");
 
-                    b.HasIndex("EmployeeId", "FinantialYearId")
+                    b.HasIndex("EmployeeId", "FinancialYearId")
                         .IsUnique();
 
                     b.ToTable("SalaryDetails");
@@ -223,10 +219,10 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("FinantialYearId")
+                    b.Property<int>("FinancialYearId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Limit")
+                    b.Property<decimal>("MaxLimit")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<float>("PercentOfTax")
@@ -237,7 +233,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FinantialYearId");
+                    b.HasIndex("FinancialYearId");
 
                     b.ToTable("Slab");
                 });
@@ -265,6 +261,37 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.HasIndex("SectionId");
 
                     b.ToTable("SubSections");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.TaxDetails", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("EmployeeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("FinancialYearId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RegimeType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TaxPaid")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FinancialYearId");
+
+                    b.HasIndex("EmployeeId", "FinancialYearId", "RegimeType")
+                        .IsUnique();
+
+                    b.ToTable("TaxDetails");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Years", b =>
@@ -527,9 +554,9 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinantialYear")
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
                         .WithMany("EmployeeInvestments")
-                        .HasForeignKey("FinantialYearId")
+                        .HasForeignKey("FinancialYearId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -541,7 +568,7 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.Navigation("Employee");
 
-                    b.Navigation("FinantialYear");
+                    b.Navigation("FinancialYear");
 
                     b.Navigation("SubSections");
                 });
@@ -593,7 +620,9 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
                     b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
                         .WithMany()
-                        .HasForeignKey("FinancialYearId");
+                        .HasForeignKey("FinancialYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Employee");
 
@@ -602,13 +631,13 @@ namespace EmployeeTaxCalculation.Data.Migrations
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Slab", b =>
                 {
-                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinantialYear")
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
                         .WithMany("Slabs")
-                        .HasForeignKey("FinantialYearId")
+                        .HasForeignKey("FinancialYearId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("FinantialYear");
+                    b.Navigation("FinancialYear");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.SubSections", b =>
@@ -620,6 +649,25 @@ namespace EmployeeTaxCalculation.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Section");
+                });
+
+            modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.TaxDetails", b =>
+                {
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.Employee", "Employee")
+                        .WithMany("TaxDetails")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeTaxCalculation.Data.Models.FinancialYear", "FinancialYear")
+                        .WithMany("TaxDetails")
+                        .HasForeignKey("FinancialYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("FinancialYear");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -678,6 +726,8 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.Navigation("EmployeeInvestments");
 
                     b.Navigation("SalaryDetails");
+
+                    b.Navigation("TaxDetails");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.FinancialYear", b =>
@@ -687,6 +737,8 @@ namespace EmployeeTaxCalculation.Data.Migrations
                     b.Navigation("OldRegimeDetails");
 
                     b.Navigation("Slabs");
+
+                    b.Navigation("TaxDetails");
                 });
 
             modelBuilder.Entity("EmployeeTaxCalculation.Data.Models.Section", b =>

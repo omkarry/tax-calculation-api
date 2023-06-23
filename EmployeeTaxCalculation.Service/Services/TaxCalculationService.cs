@@ -1,8 +1,5 @@
-﻿using EmployeeTaxCalculation.Data.Enums;
-using EmployeeTaxCalculation.Data.Models;
-using EmployeeTaxCalculation.Service.DTOs;
+﻿using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.Interfaces;
-using EmployeeTaxCalculation.Service.Mappers;
 using EmplyeeTaxCalculation.Data.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,12 +17,6 @@ namespace EmployeeTaxCalculation.Service.Services
             _configuration = configuration;
         }
 
-        /// <summary>
-        /// Calculate total income 
-        /// </summary>
-        /// <param name="empId"></param>
-        /// <param name="yearId"></param>
-        /// <returns></returns>
         public async Task<decimal?> TotalIncome(string empId, int yearId)
         {
             SalaryDetails? EmpSalaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == empId && s.FinancialYearId == yearId);
@@ -39,12 +30,6 @@ namespace EmployeeTaxCalculation.Service.Services
             return totalIncome;
         }
 
-        /// <summary>
-        /// Calculate investment under section80C
-        /// </summary>
-        /// <param name="empId"></param>
-        /// <param name="yearId"></param>
-        /// <returns></returns>
         public async Task<decimal?> CalculateSection80CAmount(string empId, int yearId)
         {
             List<EmployeeInvestment>? empInvestmentDetails = await _dbContext.EmployeeInvestments
@@ -55,11 +40,6 @@ namespace EmployeeTaxCalculation.Service.Services
             return section80C;
         }
 
-        /// <summary>
-        /// Calculate house rent allowance
-        /// </summary>
-        /// <param name="empId"></param>
-        /// <returns></returns>
         public async Task<decimal?> CalculateHRADeduction(string empId, int yearId)
         {
             EmployeeInvestment? empInvestmentDetails = await _dbContext.EmployeeInvestments
@@ -73,12 +53,6 @@ namespace EmployeeTaxCalculation.Service.Services
                 return empInvestmentDetails?.InvestedAmount;
         }
 
-        /// <summary>
-        /// Calculate taxable amount
-        /// </summary>
-        /// <param name="empId"></param>
-        /// <param name="yearId"></param>
-        /// <returns></returns>
         public async Task<decimal?> CalculateTaxableAmount(string empId, int yearId)
         {
             SalaryDetails? EmpSalaryDetails = await _dbContext.SalaryDetails.FirstOrDefaultAsync(s => s.EmployeeId == empId && s.FinancialYearId == yearId);
@@ -125,22 +99,13 @@ namespace EmployeeTaxCalculation.Service.Services
             }
         }
 
-
-        /// <summary>
-        /// Calculate Tax by year
-        /// </summary>
-        /// <param name="taxableAmount"></param>
-        /// <param name="yearId"></param>
-        /// <param name="EmpId"></param>
-        /// <param name="regimeType"></param>
-        /// <returns></returns>
         public async Task<decimal?> CalculateTaxByYear(decimal? taxableAmount, int yearId)
         {
             decimal? taxToBePaid = 0;
             decimal? remainingAmount = taxableAmount;
 
             List<Slab> slabDetails = await _dbContext.Slab
-                            .Where(s => s.FinantialYearId == yearId)
+                            .Where(s => s.FinancialYearId == yearId)
                             .ToListAsync();
 
             foreach (Slab slab in slabDetails)
@@ -174,12 +139,6 @@ namespace EmployeeTaxCalculation.Service.Services
             return taxToBePaid;
         }
 
-        /// <summary>
-        /// Calculate tax bynew regime
-        /// </summary>
-        /// <param name="EmpId"></param>
-        /// <param name="yearId"></param>
-        /// <returns></returns>
         public async Task<decimal?> TaxByNewRegime(string EmpId, int yearId)
         {
             string exemptionForNewRegime = _configuration.GetSection("Tax:NewRegimeExemption").Value;
@@ -194,13 +153,6 @@ namespace EmployeeTaxCalculation.Service.Services
             }
         }
 
-
-        /// <summary>
-        /// TAx calculation by new regime
-        /// </summary>
-        /// <param name="EmpId"></param>
-        /// <param name="yearId"></param>
-        /// <returns></returns>
         public async Task<decimal?> TaxByOldRegime(string EmpId, int yearId)
         {
             decimal? taxableAmount = await CalculateTaxableAmount(EmpId, yearId);
@@ -220,36 +172,6 @@ namespace EmployeeTaxCalculation.Service.Services
                     return taxToBePaid;
                 }
             }
-        }
-
-        public async Task<bool> AddTaxDetails(string EmpId, int yearId, int regimeType, decimal taxToBePaid)
-        {
-            _dbContext.TaxDetails.Add(new TaxDetails { Id = 0, EmployeeId = EmpId, FinancialYearId = yearId, RegimeType = regimeType, TaxPaid = taxToBePaid });
-            await _dbContext.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<List<TaxDetailsDTO>> GetTaxDetails(string empId)
-        {
-            List<TaxDetailsDTO> taxDetails = await _dbContext.TaxDetails
-                                .Include(e => e.FinancialYear.FinancialYearStart)
-                                .Include(e => e.FinancialYear.FinancialYearEnd)
-                                .Where(e => e.EmployeeId == empId)
-                                .OrderBy(e => e.FinancialYear.FinancialYearStart)
-                                .Select(e => TaxDetailsMapper.Map(e))
-                                .ToListAsync();
-            return taxDetails;
-        }
-
-        public async Task<List<EmployeeInvestmentDto>> GetInvestmentDetails(string empId, int yearId)
-        {
-            List<EmployeeInvestmentDto> investmentDetails = await _dbContext.EmployeeInvestments
-                                .Include(e => e.FinantialYear.FinancialYearStart)
-                                .Include(e => e.FinantialYear.FinancialYearEnd)
-                                .Where(e => e.EmployeeId == empId && e.YearId == yearId)
-                                .Select(e => EmployeeInvestmentMapper.Map(e))
-                                .ToListAsync();
-            return investmentDetails;
         }
     }
 }

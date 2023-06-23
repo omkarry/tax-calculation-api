@@ -9,5 +9,6 @@ namespace EmployeeTaxCalculation.Service.DTOs
         public int SubSectionId { get; set; }
         public string EmployeeId { get; set; }
         public decimal? InvestedAmount { get; set; }
+        public int YearId { get; set; }
     }
 }

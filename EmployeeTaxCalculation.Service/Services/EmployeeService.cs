@@ -18,44 +18,52 @@ namespace EmployeeTaxCalculation.Service.Services
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _dbContext;
         private readonly IConfiguration _configuration;
+        private readonly IFinancialYearRepository _financialYear;
         public EmployeeService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
-                                IConfiguration configuration, ApplicationDbContext dbContext)
+                                IConfiguration configuration, ApplicationDbContext dbContext, IFinancialYearRepository financialYear)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _dbContext = dbContext;
+            _financialYear = financialYear;
         }
 
-        public async Task<List<EmployeeDto>> GetEmployees()
+        public async Task<bool> DeleteEmployee(string id)
         {
-            List<Employee> employees = await _dbContext.Employees
-                .Include(e => e.User)
-                .Where(e => e.IsActive).ToListAsync();
-            return employees.Select(e => EmployeeMapper.Map(e)).ToList();
+            Employee? employee = await _dbContext.Employees.Include(e => e.User)
+                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
+
+            if (employee != null)
+            {
+                employee.IsActive = false;
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            else
+                return false;
         }
 
-        public async Task<List<EmployeeDetailsDto>?> GetEmpoyeesDetails()
+        public async Task<CountDto> GetCount()
         {
-            List<Employee> employees = await _dbContext.Employees
-                .Include(e => e.User)
-                .Where(e => e.IsActive).ToListAsync();
-            return employees.Select(e => EmployeeDetailsMapper.Map(e)).ToList();
-        }
-
-        public async Task<List<EmployeeDto>> GetEmployeesForPending()
-        {
-            List<Employee> employees = await _dbContext.Employees
-                .Include(e => e.User)
-                .Include(e => e.EmployeeInvestments)
-                .Where(e => e.EmployeeInvestments.Select(e => e.InvestedAmount).Sum() <= 0).ToListAsync();
-            return employees.Select(e => EmployeeMapper.Map(e)).ToList();
+            FinancialYearDto currentFinancialYear = await _financialYear.GetCurrentFinancialYear();
+            CountDto count = new()
+            {
+                NumberOfEmployeesWorking = await _dbContext.Employees.CountAsync(e => e.IsActive),
+                NumberOfDeclarationPending = await _dbContext.Employees
+                                                    .Include(e => e.TaxDetails)
+                                                    .CountAsync(e => e.TaxDetails.All(e => e.FinancialYearId == currentFinancialYear.Id)),
+                NumberOfSalaryDetailsPending = await _dbContext.Employees
+                                                    .Include(e => e.SalaryDetails)
+                                                    .CountAsync(e => e.SalaryDetails.All(e => e.FinancialYearId == currentFinancialYear.Id))
+            };
+            return count;
         }
 
         public async Task<EmployeeDto?> GetEmployeeById(string id)
         {
             Employee? result = await _dbContext.Employees.Include(e => e.User)
-                                                  .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
+                                      .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
             if (result != null)
             {
                 EmployeeDto employee = EmployeeMapper.Map(result);
@@ -64,7 +72,24 @@ namespace EmployeeTaxCalculation.Service.Services
             return null;
         }
 
-        public async Task<string> RegisterEmployee(string userId, RegisterDto inputModel)
+        public async Task<List<EmployeeNames>> GetEmployeeNames()
+        {
+            List<Employee> employees = await _dbContext.Employees
+                                                .Include(e => e.User)
+                                                .Where(e => e.IsActive)
+                                                .ToListAsync();
+            return employees.Select(e => EmployeeNamesMapper.Map(e)).ToList();
+        }
+
+        public async Task<List<EmployeeDetailsDto>> GetEmployeesDetails()
+        {
+            List<Employee> employees = await _dbContext.Employees
+                                                .Include(e => e.User)
+                                                .Where(e => e.IsActive).ToListAsync();
+            return employees.Select(e => EmployeeDetailsMapper.Map(e)).ToList();
+        }
+
+        public async Task<bool> RegisterEmployee(string userId, RegisterDto inputModel)
         {
             using (var dbcxtransaction = _dbContext.Database.BeginTransaction())
             {
@@ -74,7 +99,7 @@ namespace EmployeeTaxCalculation.Service.Services
                     User userExists = await _userManager.FindByNameAsync(inputModel.Username);
                     if (userExists != null)
                     {
-                        return "0";
+                        return false;
                     }
 
                     User user = new()
@@ -88,47 +113,88 @@ namespace EmployeeTaxCalculation.Service.Services
 
                     if (!result.Succeeded)
                     {
-                        return "-1";
-                    }
-
-                    bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
-
-                    if (!roleExist)
-                    {
-                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
-                        await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                        return false;
                     }
                     else
                     {
-                        await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+
+                        bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Employee);
+
+                        if (!roleExist)
+                        {
+                            await _roleManager.CreateAsync(new IdentityRole(UserRoles.Employee));
+                            await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                        }
+                        else
+                        {
+                            await _userManager.AddToRoleAsync(user, UserRoles.Employee);
+                        }
+
+                        Employee newEmployee = new()
+                        {
+                            Id = user.Id,
+                            Name = inputModel.Name!,
+                            CreatedAt = DateTime.Now,
+                            CreatedById = userId,
+                            IsActive = true
+                        };
+
+                        _dbContext.Employees.Add(newEmployee);
+                        await _dbContext.SaveChangesAsync();
+                        await dbcxtransaction.CommitAsync();
+                        return true;
                     }
-
-                    Employee newEmployee = new()
-                    {
-                        Id = user.Id,
-                        Name = inputModel.Name!,
-                        CreatedAt = DateTime.Now,
-                        CreatedById = userId,
-                        IsActive = true
-                    };
-
-                    _dbContext.Employees.Add(newEmployee);
-                    await _dbContext.SaveChangesAsync();
-                    await dbcxtransaction.CommitAsync();
-                    return user.Id;
                 }
                 catch (Exception ex)
                 {
                     await dbcxtransaction.RollbackAsync();
-                    return ex.Message;
+                    return false;
                 }
             }
         }
 
-        public async Task<string?> UpdateEmployee(string id, EmployeeDto updatedEmployee)
+        public async Task<bool> RemoveProfilePhoto(string id)
+        {
+            Employee? employee = await _dbContext.Employees
+                                        .FirstOrDefaultAsync(e => e.Id == id);
+            string? filePath = employee?.ProfileImagePath;
+            if (employee == null || filePath == null || !File.Exists(filePath))
+            {
+                return false;
+            }
+            else
+            {
+                File.Delete(filePath);
+                employee.ProfileImagePath = null;
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            //if (employee != null)
+            //{
+            //    if (filePath != null)
+            //    {
+            //        if (!File.Exists(filePath))
+            //        {
+            //            return false;
+            //        }
+            //        else
+            //        {
+            //            File.Delete(filePath);
+            //            employee.ProfileImagePath = null;
+            //            return true;
+            //        }
+            //    }
+            //    else
+            //        return false;
+            //}
+            //else
+            //    return false;
+        }
+
+        public async Task<bool> UpdateEmployee(string userId, string empId, UpdateEmployeeDto updatedEmployee)
         {
             Employee? employee = await _dbContext.Employees.Include(e => e.User)
-                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
+                                               .FirstOrDefaultAsync(e => e.Id.Equals(empId) && e.IsActive == true);
 
             if (employee != null)
             {
@@ -141,29 +207,17 @@ namespace EmployeeTaxCalculation.Service.Services
                 if (!string.IsNullOrEmpty(updatedEmployee.DOB.ToString()))
                     employee.DOB = updatedEmployee.DOB;
 
+                employee.UpdatedAt = DateTime.Now;
+                employee.UpdatedById = userId;
+
                 await _dbContext.SaveChangesAsync();
-                return employee.Id;
+                return true;
             }
             else
-                return "0";
+                return false;
         }
 
-        public async Task<string> DeleteEmployee(string id)
-        {
-            Employee? employee = await _dbContext.Employees.Include(e => e.User)
-                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
-
-            if (employee != null)
-            {
-                employee.IsActive = false;
-                await _dbContext.SaveChangesAsync();
-                return employee.User.Id;
-            }
-            else
-                return "0";
-        }
-
-        public async Task<bool?> UploadProfile(string username, string userId, IFormFile photo)
+        public async Task<bool> UploadProfilePhoto(string username, string userId, IFormFile photo)
         {
             string folderName = Path.Combine("uploads", username);
             string filePath = Path.Combine(folderName, photo.FileName);
@@ -178,11 +232,11 @@ namespace EmployeeTaxCalculation.Service.Services
                 await photo.CopyToAsync(stream);
             }
 
-            Employee? profile = await _dbContext.Employees.SingleOrDefaultAsync(p => p.Id == userId);
+            Employee? profile = await _dbContext.Employees.FirstOrDefaultAsync(p => p.Id == userId);
 
             if (profile == null)
             {
-                return null;
+                return false;
             }
 
             profile.ProfileImagePath = filePath;
