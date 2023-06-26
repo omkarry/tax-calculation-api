@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using TaxCalculation.Service.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
@@ -20,22 +22,22 @@ builder.Services.AddCors(o => o.AddPolicy("ReactPolicy", builder =>
     .AllowAnyHeader();
 }));
 
-// Add services to the container.
-
 // For Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlite("name=ConnectionStrings:SQLiteConnection"));
-
 
 builder.Services.AddAutoMapper(typeof(Program));
 
+builder.Services.AddScoped<IAdminRepository, AdminService>();
+builder.Services.AddScoped<IAuthenticationRepository, AuthenticationService>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeService>();
-builder.Services.AddScoped<IEmployeeSalaryDetailsRepository, EmployeeSalaryDetailsService>();
 builder.Services.AddScoped<IEmployeeInvestmentRepository, EmployeeInvestmentService>();
-builder.Services.AddScoped<ITaxCalculationRepository, TaxCalculationService>();
+builder.Services.AddScoped<IFinancialYearRepository, FinancialYearService>();
+builder.Services.AddScoped<IRegimeRepository, RegimeYearService>();
+builder.Services.AddScoped<ISalaryDetailsRepository, SalaryDetailsService>();
 builder.Services.AddScoped<ISectionRepository, SectionService>();
+builder.Services.AddScoped<ITaxCalculationRepository, TaxCalculationService>();
+builder.Services.AddScoped<ITaxDetailsRepository, TaxDetailsService>();
 
 // For Identity
 builder.Services.AddIdentity<User, IdentityRole>()
@@ -109,6 +111,11 @@ builder.Services.AddSwaggerGen(c =>
                     Array.Empty<string>()
                 }
             });
+
+    
+        var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+    
 });
 
 
