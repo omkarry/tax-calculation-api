@@ -1,4 +1,5 @@
-﻿using EmployeeTaxCalculation.Data.Models;
+﻿using EmployeeTaxCalculation.Constants;
+using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.DTOs;
 using EmployeeTaxCalculation.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,8 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeTaxCalculation.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
     public class EmployeeInvestmentController : ControllerBase
     {
@@ -17,18 +18,55 @@ namespace EmployeeTaxCalculation.Controllers
         {
             _employee = employee;
         }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("AllInvestments")]
+        public async Task<IActionResult> GetAllInvestments()
+        {
+            List<IGrouping<string, EmployeeInvestmentDto>> investments = await _employee.GetAllInvestments();
+            return Ok(new ApiResponse<List<IGrouping<string, EmployeeInvestmentDto>>> { Message = "All investment details", Result = investments });
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="yearId"></param>
+        /// <returns></returns>
+        [HttpGet("AllInvestmentsByYear/{yearId}")]
+        public async Task<IActionResult> GetAllInvestmentsByYear(int yearId)
+        {
+            List<IGrouping<string, EmployeeInvestmentDto>> investments = await _employee.GetAllInvestmentsByYear(yearId);
+            return Ok(new ApiResponse<List<IGrouping<string, EmployeeInvestmentDto>>> { Message = "All investments by year" });
+        }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(string id)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="yearId"></param>
+        /// <returns></returns>
+        [HttpGet("EmployeeInvestmentsForYear/{empId}/{yearId}")]
+        public async Task<IActionResult> GetEmployeeInvestmentsForYear(string empId, int yearId)
+        {
+            List<EmployeeInvestmentDto> investments = await _employee.GetEmployeeInvestmentsForYear(empId: empId, yearId: yearId);
+            return Ok(new ApiResponse<List<EmployeeInvestmentDto>> { Message = "Employee's investments in a year", Result = investments });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <returns></returns>
+        [HttpGet("EmployeeInvestments/{empId}")]
+        public async Task<IActionResult> GetEmployeeInvestmentsById(string empId)
         {
             try
             {
-                List<EmployeeInvestmentDto>? result = await _employee.GetEmployeeInvestmentById(id);
-                if (result != null)
-                {
-                    return Ok(new ApiResponse<List<EmployeeInvestmentDto>> { StatusCode = 200, Message = "Employee's Investment Details", Result = result });
-                }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Employee with investment details not found" });
+                List<IGrouping<int, EmployeeInvestmentDto>> result = await _employee.GetEmployeeInvestmentById(empId);
+                return Ok(new ApiResponse<List<IGrouping<int, EmployeeInvestmentDto>>> { Message = "Employee's investments", Result = result });
             }
             catch (Exception ex)
             {
@@ -36,40 +74,29 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Post([FromQuery]string empId, [FromBody] List<EmployeeInvestmentDto> investmentDetails)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="investmentDetails"></param>
+        /// <returns></returns>
+        [HttpPost("AddEmployeeInvestment/{empId}")]
+        public async Task<IActionResult> Post(string empId, [FromBody] List<EmployeeInvestmentDto> investmentDetails)
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return BadRequest(ResponseMessages.DataFormat);
+
                 bool result = await _employee.AddEmployeeInvestment(empId, investmentDetails);
 
                 if (!result)
                 {
-                    return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Employee with investment details already exist" });
+                    return Ok(new ApiResponse<object> { Message = "Unable to add employee investment" });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<bool> { StatusCode = 200, Message = "Investment details added succesfully", Result = result });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(string id, [FromBody] List<EmployeeInvestmentDto> updatedEmployeeInvestment)
-        {
-            try
-            {
-                string? result = await _employee.UpdateEmployeeInvestment(id, updatedEmployeeInvestment);
-                if (result == null)
-                {
-                    return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment details not found" });
-                }
-                else
-                {
-                    return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment details updated succesfully" });
+                    return Ok(new ApiResponse<bool> { Message = "Investment details added succesfully", Result = result });
                 }
             }
             catch (Exception ex)
@@ -78,19 +105,84 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="updatedEmployeeInvestment"></param>
+        /// <returns></returns>
+        [HttpPut("UpdateInvestmentDetails/{empId}")]
+        public async Task<IActionResult> Put(string empId, [FromBody] List<EmployeeInvestmentDto> updatedEmployeeInvestment)
         {
             try
             {
-                bool result = await _employee.DeleteEmployeeInvestment(id);
+                if (!ModelState.IsValid)
+                    return BadRequest(ResponseMessages.DataFormat);
+
+                bool result = await _employee.UpdateEmployeeInvestment(empId, updatedEmployeeInvestment);
                 if (!result)
                 {
-                    return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment details Not Found" });
+                    return Ok(new ApiResponse<object> { Message = "Unable to update investment details" });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment details Deleted succesfully" });
+                    return Ok(new ApiResponse<object> { Message = "Investment details updated succesfully" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="yearId"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteInvestmentsByYear/{empId}/{yearId}")]
+        public async Task<IActionResult> Delete(string empId, int yearId)
+        {
+            try
+            {
+                bool result = await _employee.DeleteEmployeeInvestmentsByYear(empId, yearId);
+                if (!result)
+                {
+                    return Ok(new ApiResponse<object> { Message = "Unable to delete investment details" });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<object> { Message = "Investment details Deleted succesfully" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="yearId"></param>
+        /// <param name="investmentId"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteInvestment/{empId}/{yearId}/{investmentId}")]
+        public async Task<IActionResult> DeleteEmployeeInvestment(string empId, int yearId, int investmentId)
+        {
+            try
+            {
+                bool result = await _employee.DeleteEmployeeInvestment(empId, yearId, investmentId);
+                if (!result)
+                {
+                    return Ok(new ApiResponse<object> { Message = "Unable to delete investment details" });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<object> { Message = "Investment details Deleted succesfully" });
                 }
             }
             catch (Exception ex)

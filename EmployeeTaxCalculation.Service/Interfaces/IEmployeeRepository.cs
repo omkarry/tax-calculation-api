@@ -13,7 +13,7 @@ namespace EmployeeTaxCalculation.Service.Interfaces
         public Task<bool> UpdateEmployee(string userId, string empId, UpdateEmployeeDto updatedEmployee);
         public Task<bool> DeleteEmployee(string id);
         public Task<bool> UploadProfilePhoto(string username, string userId, IFormFile photo);
-        public Task<bool> RemoveProfilePhoto(string id);
+        public Task<bool> RemoveProfilePhoto(string empId, string userId);
 
         public Task<CountDto> GetCount();
     }

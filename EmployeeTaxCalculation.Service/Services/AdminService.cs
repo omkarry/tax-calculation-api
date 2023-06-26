@@ -27,15 +27,17 @@ namespace EmployeeTaxCalculation.Service.Services
             _dbContext = dbContext;
         }
 
-        public async Task<bool?> DeleteAdmin(string id)
+        public async Task<bool> DeleteAdmin(string userId, string adminId)
         {
             Employee? employee = await _dbContext.Employees.Include(e => e.User)
-                                                    .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
+                                                    .FirstOrDefaultAsync(e => e.Id.Equals(userId) && e.IsActive == true);
 
             if (employee != null)
             {
                 try
                 {
+                    employee.UpdatedAt = DateTime.Now;
+                    employee.UpdatedById = userId;
                     employee.IsActive = false;
                     await _dbContext.SaveChangesAsync();
                     return true;
@@ -47,10 +49,10 @@ namespace EmployeeTaxCalculation.Service.Services
                 }
             }
             else
-                return null;
+                return false;
         }
 
-        public async Task<AdminDto?> GetAdmin(string id)
+        public async Task<AdminDto> GetAdmin(string id)
         {
             Employee? employee = await _dbContext.Employees.Include(e => e.User)
                                                     .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
@@ -62,7 +64,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 return null;
         }
 
-        public async Task<List<AdminDto>?> GetAdmins()
+        public async Task<List<AdminDto>> GetAdmins()
         {
             List<Employee> admins = await _dbContext.Employees.Include(e => e.User)
                                                     .Where(e => e.IsActive == true).ToListAsync();
@@ -74,13 +76,13 @@ namespace EmployeeTaxCalculation.Service.Services
                 return null;
         }
 
-        public async Task<bool?> RegisterAdmin(string userId, RegisterDto model)
+        public async Task<bool> RegisterAdmin(string userId, RegisterDto model)
         {
             using (var dbcxtransaction = _dbContext.Database.BeginTransaction())
             {
                 User userExists = await _userManager.FindByNameAsync(model.Username);
                 if (userExists != null)
-                    return null;
+                    return false;
                 try
                 {
                     User user = new()
@@ -130,7 +132,7 @@ namespace EmployeeTaxCalculation.Service.Services
             }
         }
 
-        public async Task<bool?> UpdateAdmin(string userId, string adminId, UpdateEmployeeDto model)
+        public async Task<bool> UpdateAdmin(string userId, string adminId, UpdateEmployeeDto model)
         {
             try
             {
@@ -155,7 +157,7 @@ namespace EmployeeTaxCalculation.Service.Services
                     return true;
                 }
                 else
-                    return null;
+                    return false;
             }
             catch(Exception ex)
             {

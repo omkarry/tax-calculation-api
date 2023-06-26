@@ -6,9 +6,9 @@ namespace EmployeeTaxCalculation.Service.Mappers
 {
     public class TaxDetailsMapper
     {
-        public static TaxDetailsDTO Map(TaxDetails taxDetails)
+        public static TaxDetailsDto Map(TaxDetails taxDetails)
         {
-            return new TaxDetailsDTO
+            return new TaxDetailsDto
             {
                 Id = taxDetails.Id,
                 EmployeeId = taxDetails.EmployeeId,

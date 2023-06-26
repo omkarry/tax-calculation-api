@@ -22,11 +22,12 @@ namespace EmployeeTaxCalculation.Service.Services
             _dbContext = dbContext;
         }
 
-        public async Task<bool> AddRegime(int yearId, List<SlabDto> newRegime)
+        public async Task<bool> AddRegime(int yearId, int oldRegime, List<SlabDto> newRegime)
         {
             Slab? regimeDetailsExist = await _dbContext.Slab.FirstOrDefaultAsync(s => s.FinancialYearId == yearId);
             if (regimeDetailsExist == null)
             {
+                _dbContext.OldRegime.Add(new OldRegime { FinancialYearId = yearId, OldRegimeYearId = oldRegime });
                 _dbContext.Slab.AddRange(newRegime.Select(e => new Slab
                 {
                     Id = 0,
@@ -100,14 +101,5 @@ namespace EmployeeTaxCalculation.Service.Services
                 return false;
             }
         }
-
-        //public async Task<List<FinancialYearDto>> GetFinancialYears()
-        //{
-        //    List<FinancialYear> years = await _dbContext.FinancialYear
-        //                    .Include(y => y.FinancialYearStart)
-        //                    .Include(y => y.FinancialYearEnd)
-        //                    .ToListAsync();
-        //    return years.Select(e => FinancialYearMapper.Map(e)).ToList();
-        //}
     }
 }

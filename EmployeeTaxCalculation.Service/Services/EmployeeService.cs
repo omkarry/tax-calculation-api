@@ -153,10 +153,10 @@ namespace EmployeeTaxCalculation.Service.Services
             }
         }
 
-        public async Task<bool> RemoveProfilePhoto(string id)
+        public async Task<bool> RemoveProfilePhoto(string empId, string userId)
         {
             Employee? employee = await _dbContext.Employees
-                                        .FirstOrDefaultAsync(e => e.Id == id);
+                                        .FirstOrDefaultAsync(e => e.Id == empId && e.IsActive);
             string? filePath = employee?.ProfileImagePath;
             if (employee == null || filePath == null || !File.Exists(filePath))
             {
@@ -166,29 +166,11 @@ namespace EmployeeTaxCalculation.Service.Services
             {
                 File.Delete(filePath);
                 employee.ProfileImagePath = null;
+                employee.UpdatedAt = DateTime.Now;
+                employee.UpdatedById = userId;
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            //if (employee != null)
-            //{
-            //    if (filePath != null)
-            //    {
-            //        if (!File.Exists(filePath))
-            //        {
-            //            return false;
-            //        }
-            //        else
-            //        {
-            //            File.Delete(filePath);
-            //            employee.ProfileImagePath = null;
-            //            return true;
-            //        }
-            //    }
-            //    else
-            //        return false;
-            //}
-            //else
-            //    return false;
         }
 
         public async Task<bool> UpdateEmployee(string userId, string empId, UpdateEmployeeDto updatedEmployee)

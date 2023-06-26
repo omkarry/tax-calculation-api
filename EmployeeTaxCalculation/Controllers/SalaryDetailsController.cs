@@ -1,4 +1,5 @@
-﻿using EmployeeTaxCalculation.Data.Models;
+﻿using EmployeeTaxCalculation.Constants;
+using EmployeeTaxCalculation.Data.Models;
 using EmployeeTaxCalculation.Service.DTOs;
 using EmployeeTaxCalculation.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -6,29 +7,46 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeTaxCalculation.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
     public class SalaryDetailsController : ControllerBase
     {
-        private readonly IEmployeeSalaryDetailsRepository _employee;
-        public SalaryDetailsController(IEmployeeSalaryDetailsRepository employee)
+        private readonly ISalaryDetailsRepository _salaryDetailsRepository;
+        public SalaryDetailsController(ISalaryDetailsRepository salaryDetailsRepository)
         {
-            _employee = employee;
+            _salaryDetailsRepository = salaryDetailsRepository;
         }
 
-        [Authorize(Roles = "Admin, Employee")]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(string id, int yearId)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <returns></returns>
+        [HttpGet("SalaryDetails/{empId}")]
+        public async Task<IActionResult> GetSalaryDetails(string empId)
+        {
+            List<SalaryDetailsDto> salaryDetails = await _salaryDetailsRepository.GetSalaryDetails(empId);
+            return Ok(new ApiResponse<List<SalaryDetailsDto>> { Message = "Salary details of employee", Result = salaryDetails });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="yearId"></param>
+        /// <returns></returns>
+        [HttpGet("SalaryDetailsByYear/{empId}/{yearId}")]
+        public async Task<IActionResult> Get(string empId, int yearId)
         {
             try
             {
-                SalaryDetailsDto? result = await _employee.GetSalaryDetailsByYear(id, yearId);
+                SalaryDetailsDto? result = await _salaryDetailsRepository.GetSalaryDetailsByYear(empId, yearId);
                 if (result != null)
                 {
-                    return Ok(new ApiResponse<SalaryDetailsDto> { StatusCode = 200, Message = "Employee's Salary Details", Result = result });
+                    return Ok(new ApiResponse<SalaryDetailsDto> { Message = "Employee's Salary Details", Result = result });
                 }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Employee with salary Not found" });
+                return Ok(new ApiResponse<object> { Message = "Employee with salary Not found" });
             }
             catch (Exception ex)
             {
@@ -36,71 +54,121 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] SalaryDetailsDto salaryDetails)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <returns></returns>
+        [HttpGet("CurrentYearSalaryDetails/{empId}")]
+        public async Task<IActionResult> CurrentYearSalaryDetails(string empId)
         {
-            try
+            SalaryDetailsDto? salaryDetails = await _salaryDetailsRepository.GetCurrentYearSalaryDetails(empId);
+            if (salaryDetails != null)
             {
-                int result = await _employee.AddSalaryDetails(salaryDetails);
-
-                if (result == 1)
-                {
-                    return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Employee with salary details Already exist" });
-                }
-                else
-                {
-                    return Ok(new ApiResponse<int> { StatusCode = 200, Message = "Salary details added succesfully", Result = result });
-                }
+                return Ok(new ApiResponse<SalaryDetailsDto> { Message = "Current year salary details", Result = salaryDetails });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            else
+                return NotFound(new ApiResponse<object> { Message = "Salary details not found for current year" });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="salaryDetails"></param>
+        /// <returns></returns>
         [Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] SalaryDetailsDto updatedSalary)
+        [HttpPost("AddSalaryDetails")]
+        public async Task<IActionResult> AddSalaryDetails([FromBody] SalaryDetailsDto salaryDetails)
         {
             try
             {
-                int? result = await _employee.UpdateSalaryDetails(id, updatedSalary);
-                if (result == null)
-                {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "Salary details Not found" });
-                }
-                else
-                {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "Salary details Updated succesfully" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
+                if (!ModelState.IsValid)
+                    return BadRequest(ResponseMessages.DataFormat);
+                bool result = await _salaryDetailsRepository.AddSalaryDetails(salaryDetails);
 
-        [Authorize(Roles = "Admin")]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                bool result = await _employee.DeleteSalaryDetails(id);
                 if (!result)
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "Salary details Not Found" });
+                    return Ok(new ApiResponse<object> { Message = "Unable to add salary details" });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "SalaryDetails Deleted succesfully" });
+                    return Ok(new ApiResponse<object> { Message = "Salary details added succesfully"});
                 }
             }
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="updatedSalary"></param>
+        /// <returns></returns>
+        [Authorize(Roles = "Admin")]
+        [HttpPut("UpdateSalaryDetails/{id}")]
+        public async Task<IActionResult> UpdateSalaryDetails(int id, [FromBody] SalaryDetailsDto updatedSalary)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ResponseMessages.DataFormat);
+                bool result = await _salaryDetailsRepository.UpdateSalaryDetails(id, updatedSalary);
+                if (!result)
+                {
+                    return Ok(new ApiResponse<string> { Message = "Unable to update salary details" });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<object> { Message = "Salary details updated succesfully" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <param name="yearId"></param>
+        /// <returns></returns>
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("DeleteSalaryDetails/{empId}/{yearId}")]
+        public async Task<IActionResult> DeleteSalaryDetails(string empId, int yearId)
+        {
+            try
+            {
+                bool result = await _salaryDetailsRepository.DeleteSalaryDetails(empId, yearId);
+                if (!result)
+                {
+                    return Ok(new ApiResponse<object> { Message = "Unable to delete salary details" });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<object> { Message = "Salary details deleted succesfully" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [Authorize(Roles = "Admin")]
+        [HttpGet("PendingSalaryDetails")]
+        public async Task<IActionResult> GetPendingSalaryDetails()
+        {
+            List<EmployeeNames> employees = await _salaryDetailsRepository.PendingSalaryDetails();
+            return Ok(new ApiResponse<List<EmployeeNames>> { Message = "List of employees with pending salary details" });
         }
     }
 }

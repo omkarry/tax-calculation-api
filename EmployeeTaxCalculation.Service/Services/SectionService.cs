@@ -19,7 +19,7 @@ namespace EmployeeTaxCalculation.Service.Services
             _mapper = mapper;
         }
 
-        public async Task<List<SectionDto>?> GetSections()
+        public async Task<List<SectionDto>> GetSections()
         {
             return await _dbContext.Sections.Include(s => s.SubSections).Select(e => SectionMapper.Map(e)).ToListAsync();
         }

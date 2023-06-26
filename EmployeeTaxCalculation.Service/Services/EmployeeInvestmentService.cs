@@ -75,7 +75,7 @@ namespace EmployeeTaxCalculation.Service.Services
             return employeeInvestments;
         }
 
-        public async Task<List<EmployeeInvestmentDto>> GetAllInvestments(string empId, int yearId)
+        public async Task<List<EmployeeInvestmentDto>> GetEmployeeInvestmentsForYear(string empId, int yearId)
         {
             List<EmployeeInvestmentDto> employeeInvestments = await _dbContext.EmployeeInvestments
                                                                                 .Where(e => e.EmployeeId == empId && e.YearId == yearId)

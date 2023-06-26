@@ -2,7 +2,7 @@
 
 namespace EmployeeTaxCalculation.Service.DTOs
 {
-    public class TaxDetailsDTO
+    public class TaxDetailsDto
     {
         public int Id { get; set; }
         public string EmployeeId { get; set; }

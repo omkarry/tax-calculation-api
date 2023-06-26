@@ -1,110 +1,107 @@
-﻿using EmployeeTaxCalculation.Data.Auth;
+﻿using EmployeeTaxCalculation.Constants;
 using EmployeeTaxCalculation.Data.DTOs;
 using EmployeeTaxCalculation.Data.Models;
+using EmployeeTaxCalculation.Service.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace EmployeeTaxCalculation.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class AuthenticateController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly IAuthenticationRepository _authenticationRepository;
 
         public AuthenticateController(
             UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IAuthenticationRepository authenticationRepository)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _authenticationRepository = authenticationRepository;
         }
 
-        [HttpPost]
-        [Route("login")]
+        /// <summary>
+        /// Login 
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>Returns object with token, expiration, role and user id</returns>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /api/Authentication/Login
+        ///     {
+        ///        "username": "string",
+        ///        "password": "string"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns object with token, expiration, role and user id</response>
+        /// <response code="400">Entered data is not in correct format</response>
+        /// <response code="401">Unauthorized user</response>
+        /// <response code="500">Internal server error</response>
+        [HttpPost("Login")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            User? user = await _userManager.FindByNameAsync(model.Username);
-            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object> { Message = ResponseMessages.DataFormat });
+            try
             {
-                IList<string> userRoles = await _userManager.GetRolesAsync(user);
-
-                List<Claim> authClaims = new()
+                object? result = await _authenticationRepository.Login(model);
+                if (result != null)
                 {
-                    new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.Sid, user.Id)
-                };
-
-                foreach (string userRole in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                    return Ok(new ApiResponse<object> { Message = ResponseMessages.LoginSuccessful, Result = result });
                 }
-                JwtSecurityToken token = GetToken(authClaims);
-
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token),
-                    expiration = token.ValidTo,
-                    role = userRoles[0],
-                    userId = user.Id
-                });
+                else
+                    return Unauthorized(new ApiResponse<object> { Message = ResponseMessages.WrongCredentials });
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
-        [HttpPost]
-        [Route("register-admin")]
-        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto model)
-        {
-            User userExists = await _userManager.FindByNameAsync(model.Username);
-            if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object> { StatusCode = 500, Message = "User already exists!" });
-
-            User user = new()
-            {
-                Email = model.Email,
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Username
-            };
-            IdentityResult result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object> { StatusCode = 500, Message = "User creation failed! Please check user details and try again." });
-
-            bool roleExist = await _roleManager.RoleExistsAsync(UserRoles.Admin);
-
-            if (!roleExist)
-            {
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-                await _userManager.AddToRoleAsync(user, UserRoles.Admin);
-            }
-            else
-            {
-                await _userManager.AddToRoleAsync(user, UserRoles.Admin);
-            }
-            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "User created successfully!" });
-        }
-
+        /// <summary>
+        /// Check whether user with this email exist or not 
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns>Returns true if user with email present</returns>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /api/Authentication/IsEmailExist/{email}
+        ///     
+        /// </remarks>
+        /// <response code="200">Returns true if user with email present</response>
+        /// <response code="404">Returns false if user with email is not present</response>
+        /// <response code="500">Internal server error</response>
         [HttpGet("IsEmailExist/{email}")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> IsEmailExist(string email)
         {
             try
             {
-                User? ext = await _userManager.FindByEmailAsync(email);
-                if (ext != null)
+                bool result = await _authenticationRepository.IsEmailExist(email);
+                if (result)
                 {
-                    return Ok(new ApiResponse<bool> { StatusCode = 200, Message = "User already exist with this email", Result = true });
+                    return Ok(new ApiResponse<bool> { Message = ResponseMessages.UserExistWithEmail, Result = result });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<bool> { StatusCode = 200, Result = false });
+                    return NotFound(new ApiResponse<bool> { Message = ResponseMessages.UserNotExistWithEmail, Result = result });
                 }
             }
             catch (Exception ex)
@@ -113,40 +110,42 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
+        /// <summary>
+        /// Check whether user with this username exist or not 
+        /// </summary>
+        /// <param name="username"></param>
+        /// <returns>Returns true if user with username present</returns>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /api/Authentication/IsUsernameExist/{username}
+        ///     
+        /// </remarks>
+        /// <response code="200">Returns true if user with username present</response>
+        /// <response code="404">Returns false if user with username is not present</response>
+        /// <response code="500">Internal server error</response>
         [HttpGet("IsUsernameExist/{username}")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> IsUsernameExist(string username)
         {
             try
             {
-                User? ext = await _userManager.FindByNameAsync(username);
-                if (ext != null)
+                bool result = await _authenticationRepository.IsEmailExist(username);
+                if (result)
                 {
-                    return Ok(new ApiResponse<bool> { StatusCode = 200, Message = "User already exist with this username", Result = true });
+                    return Ok(new ApiResponse<bool> { Message = ResponseMessages.UserExistWithUsername, Result = result });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<bool> { StatusCode = 200, Result = false });
+                    return NotFound(new ApiResponse<bool> { Message = ResponseMessages.UserNotExistWithUsername, Result = result });
                 }
             }
-            catch (Exception ex)    
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
-        }
-
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
-        {
-            SymmetricSecurityKey authSigningKey = new(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-            JwtSecurityToken token = new(
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddHours(3),
-                claims: authClaims,
-                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                );
-
-            return token;
         }
     }
 }

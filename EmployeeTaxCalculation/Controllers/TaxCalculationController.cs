@@ -7,29 +7,29 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeTaxCalculation.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
     public class TaxCalculationController : ControllerBase
     {
-        public readonly ITaxCalculationRepository _employee;
-        public TaxCalculationController(ITaxCalculationRepository employee)
+        public readonly ITaxCalculationRepository _taxCalculationRepository;
+        public TaxCalculationController(ITaxCalculationRepository taxCalculationRepository)
         {
-            _employee = employee;
+            _taxCalculationRepository= taxCalculationRepository;
         }
 
         [HttpGet]
-        [Route("oldRegime")]
-        public async Task<IActionResult> GetTaxByOldRegime([FromQuery]string empId, int yearId)
+        [Route("OldRegime/{empId}/{yearId}")]
+        public async Task<IActionResult> GetTaxByOldRegime(string empId, int yearId)
         {
             try
             {
-                decimal? result = await _employee.TaxByOldRegime(empId, yearId);
+                decimal? result = await _taxCalculationRepository.TaxByOldRegime(empId, yearId);
                 if (result != null)
                 {
-                    return Ok(new ApiResponse<decimal?> { StatusCode = 200, Message = "Tax by old regime", Result = result }) ;
+                    return Ok(new ApiResponse<decimal?> { Message = "Tax by old regime", Result = result }) ;
                 }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment declaration not found" });
+                return Ok(new ApiResponse<object> { Message = "Unable to calculate tax" });
             }
             catch (Exception ex)
             {
@@ -38,36 +38,17 @@ namespace EmployeeTaxCalculation.Controllers
         }
 
         [HttpGet]
-        [Route("newRegime")]
-        public async Task<IActionResult> GetTaxByNewRegime([FromQuery]string empId, int yearId)
+        [Route("NewRegime/{empId}/{yearId}")]
+        public async Task<IActionResult> GetTaxByNewRegime(string empId, int yearId)
         {
             try
             {
-                decimal? result = await _employee.TaxByNewRegime(empId, yearId);
+                decimal? result = await _taxCalculationRepository.TaxByNewRegime(empId, yearId);
                 if (result != null)
                 {
-                    return Ok(new ApiResponse<decimal?> { StatusCode = 200, Message = "Tax by New regime", Result = result });
+                    return Ok(new ApiResponse<decimal?> { Message = "Tax by New regime", Result = result });
                 }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment declaration not found" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        [HttpGet]
-        [Route("TaxDetails")]
-        public async Task<IActionResult> GetTaxDetails(string empId)
-        {
-            try
-            {
-                List<TaxDetailsDTO>? result = await _employee.GetTaxDetails(empId);
-                if (result != null)
-                {
-                    return Ok(new ApiResponse<List<TaxDetailsDTO>?> { StatusCode = 200, Message = "Tax by New regime", Result = result });
-                }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Investment declaration not found" });
+                return Ok(new ApiResponse<object> {Message = "Unable to calculate tax" });
             }
             catch (Exception ex)
             {

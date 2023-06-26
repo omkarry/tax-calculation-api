@@ -22,7 +22,7 @@ namespace EmployeeTaxCalculation.Service.Services
             _financialYearRepository = financialYearRepository; 
         }
 
-        public async Task<bool> AddTaxDetails(TaxDetailsDTO taxDetailsDTO)
+        public async Task<bool> AddTaxDetails(TaxDetailsDto taxDetailsDTO)
         {
             TaxDetails? taxDetails = await _dbContext.TaxDetails
                                         .FirstOrDefaultAsync(e => e.EmployeeId == taxDetailsDTO.EmployeeId && e.FinancialYearId == taxDetailsDTO.FinancialYearId);
@@ -58,36 +58,36 @@ namespace EmployeeTaxCalculation.Service.Services
                 return false;
         }
 
-        public async Task<List<IGrouping<int, TaxDetailsDTO>>> GetAllTaxDetails()
+        public async Task<List<IGrouping<int, TaxDetailsDto>>> GetAllTaxDetails()
         {
-            List<IGrouping<int, TaxDetailsDTO>> taxDetails = await _dbContext.TaxDetails
+            List<IGrouping<int, TaxDetailsDto>> taxDetails = await _dbContext.TaxDetails
                                                                     .Select(e => TaxDetailsMapper.Map(e))
                                                                     .GroupBy(e => e.FinancialYearId)
                                                                     .ToListAsync();
             return taxDetails;
         }
 
-        public async Task<List<TaxDetailsDTO>> GetAllTaxDetailsByYear(int yearId)
+        public async Task<List<TaxDetailsDto>> GetAllTaxDetailsByYear(int yearId)
         {
-            List<TaxDetailsDTO> taxDetails = await _dbContext.TaxDetails
+            List<TaxDetailsDto> taxDetails = await _dbContext.TaxDetails
                                                     .Where(e => e.FinancialYearId == yearId)
                                                     .Select(e => TaxDetailsMapper.Map(e))
                                                     .ToListAsync();
             return taxDetails;
         }
 
-        public async Task<List<TaxDetailsDTO>> GetTaxDetails(string empId)
+        public async Task<List<TaxDetailsDto>> GetTaxDetails(string empId)
         {
-            List<TaxDetailsDTO> taxDetails = await _dbContext.TaxDetails
+            List<TaxDetailsDto> taxDetails = await _dbContext.TaxDetails
                                                     .Where(e => e.EmployeeId == empId)
                                                     .Select(e => TaxDetailsMapper.Map(e))
                                                     .ToListAsync();
             return taxDetails;
         }
 
-        public async Task<TaxDetailsDTO?> GetTaxDetailsByYear(string empId, int yearId)
+        public async Task<TaxDetailsDto?> GetTaxDetailsByYear(string empId, int yearId)
         {
-            TaxDetailsDTO? taxDetails = await _dbContext.TaxDetails
+            TaxDetailsDto? taxDetails = await _dbContext.TaxDetails
                                                     .Where(e => e.FinancialYearId == yearId && e.EmployeeId == empId)
                                                     .Select(e => TaxDetailsMapper.Map(e))
                                                     .FirstOrDefaultAsync();
@@ -105,7 +105,7 @@ namespace EmployeeTaxCalculation.Service.Services
             return employees;
         }
 
-        public async Task<bool> UpdateTaxDetails(TaxDetailsDTO taxDetailsDTO)
+        public async Task<bool> UpdateTaxDetails(TaxDetailsDto taxDetailsDTO)
         {
             TaxDetails? taxDetails = await _dbContext.TaxDetails
                                             .FirstOrDefaultAsync(e => e.FinancialYearId == taxDetailsDTO.FinancialYearId && 

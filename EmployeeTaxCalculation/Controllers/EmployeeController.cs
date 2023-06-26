@@ -4,54 +4,39 @@ using EmployeeTaxCalculation.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using EmployeeTaxCalculation.Data.DTOs;
-using System.IdentityModel.Tokens.Jwt;
+using EmployeeTaxCalculation.Constants;
 
 namespace EmployeeTaxCalculation.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
     public class EmployeeController : ControllerBase
     {
-        private readonly IEmployeeRepository _employee;
+        private readonly IEmployeeRepository _employeeRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public EmployeeController(IEmployeeRepository employee, IHttpContextAccessor httpContextAccessor)
+        public EmployeeController(IEmployeeRepository employeeRepository, IHttpContextAccessor httpContextAccessor)
         {
-            _employee = employee;
+            _employeeRepository = employeeRepository;
             _httpContextAccessor = httpContextAccessor;
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> Get()
-        //{
-        //    try
-        //    {
-        //        List<EmployeeDto> result = await _employee.GetEmployees();
-        //        if (result != null)
-        //        {
-        //            return Ok(new ApiResponse<List<EmployeeDto>> { StatusCode = 200, Message = "List of Employees", Result = result });
-        //        }
-        //        return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
-        //    }
-        //    catch ( Exception ex)
-        //    {
-        //        return StatusCode(500, ex.Message);
-        //    }
-        //}
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("Employees")]
         public async Task<IActionResult> GetEmployeesDetails()
         {
             try
             {
-                List<EmployeeDetailsDto>? result = await _employee.GetEmpoyeesDetails();
-                if (result != null)
+                List<EmployeeDetailsDto> result = await _employeeRepository.GetEmployeesDetails();
+                if (result.Count != 0)
                 {
-                    return Ok(new ApiResponse<Object> { StatusCode = 200, Message = "List of Employees", Result = result });
+                    return Ok(new ApiResponse<List<EmployeeDetailsDto>> { Message = ResponseMessages.EmployeeList, Result = result });
                 }
-                return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
+                return Ok(new ApiResponse<object> { Message = ResponseMessages.NoEmployees, Result = null });
             }
             catch (Exception ex)
             {
@@ -59,63 +44,74 @@ namespace EmployeeTaxCalculation.Controllers
             }
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetAllPending()
-        //{
-        //    try
-        //    {
-        //        List<EmployeeDto> result = await _employee.GetEmployees();
-        //        if (result != null)
-        //        {
-        //            return Ok(new ApiResponse<List<EmployeeDto>> { StatusCode = 200, Message = "List of Employees", Result = result });
-        //        }
-        //        return Ok(new ApiResponse<object> { StatusCode = 200, Message = "No employees" });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, ex.Message);
-        //    }
-        //}
-
-        [HttpGet]
-        [Route("{id}")]
-        public async Task<IActionResult> Get(string id)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("EmployeeNames")]
+        public async Task<IActionResult> GetEmployeeNames()
         {
             try
             {
-                EmployeeDto? result = await _employee.GetEmployeeById(id);
-                if (result != null)
+                List<EmployeeNames> result = await _employeeRepository.GetEmployeeNames();
+                if (result.Count != 0)
                 {
-                    return Ok(new ApiResponse<EmployeeDto> { StatusCode = 200, Message = "Employee Details", Result = result });
+                    return Ok(new ApiResponse<List<EmployeeNames>> { Message = "List of Employees", Result = result });
                 }
-                return Ok(new ApiResponse<EmployeeDto> { StatusCode = 200, Message = "Employee Not found" });
+                return Ok(new ApiResponse<object> { Message = "No employees", Result = null });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetEmployeeById(string id)
+        {
+            try
+            {
+                EmployeeDto? result = await _employeeRepository.GetEmployeeById(id);
+                if (result != null)
+                {
+                    return Ok(new ApiResponse<EmployeeDto> { Message = "Employee Details", Result = result });
+                }
+                return NotFound(new ApiResponse<object> { Message = "Employee Not found", Result = null });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputModel"></param>
+        /// <returns></returns>
         [HttpPost("AddEmployee")]
-        public async Task<IActionResult> Post([FromBody] RegisterDto inputModel)
+        public async Task<IActionResult> RegisterEmployee([FromBody] RegisterDto inputModel)
         {
             try
             {
-                //string userId = User.FindFirstValue(ClaimTypes.Sid);
-                string? userId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Sid);
-                string result = await _employee.RegisterEmployee(userId, inputModel);
+                if (!ModelState.IsValid)
+                    return BadRequest(new ApiResponse<object> { Message = ResponseMessages.DataFormat });
+                string userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Sid);
+                bool result = await _employeeRepository.RegisterEmployee(userId, inputModel);
 
-                if (result.Equals("0"))
+                if (result)
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Already exist" });
-                }
-                else if (result.Equals("-1"))
-                {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Not Created" });
+                    return Ok(new ApiResponse<bool> { Message = "User Created succesfully", Result = result });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Created succesfully", Result = result });
+                    return Ok(new ApiResponse<object> { Message = "User Already exist", Result = null });
                 }
             }
             catch (Exception ex)
@@ -123,94 +119,129 @@ namespace EmployeeTaxCalculation.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(string id, [FromBody] EmployeeDto updatedEmployee)
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="updatedEmployee"></param>
+        /// <returns></returns>
+        [HttpPut("UpdateEmployee/{id}")]
+        public async Task<IActionResult> UpdateEmployee(string id, [FromBody] UpdateEmployeeDto updatedEmployee)
         {
             try
             {
-                string? result = await _employee.UpdateEmployee(id, updatedEmployee);
-                if (result == "0")
+                if (!ModelState.IsValid)
+                    return BadRequest(new ApiResponse<object> { Message = ResponseMessages.DataFormat });
+
+                string userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Sid);
+                bool result = await _employeeRepository.UpdateEmployee(id, userId, updatedEmployee);
+                if (result)
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Not found" });
+                    return Ok(new ApiResponse<string> { Message = "User updated succesfully" });
                 }
                 else
                 {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Updated succesfully" });
+                    return Ok(new ApiResponse<string> { Message = "Unable to update employee" });
                 }
             }
-            catch(Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
-        {
-            try
-            {
-                string? result = await _employee.DeleteEmployee(id);
-                if (result.Equals("0"))
-                {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Not Found" });
-                }
-                else
-                {
-                    return Ok(new ApiResponse<string> { StatusCode = 200, Message = "User Deleted succesfully" });
-                }
-            }
-            catch( Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
         }
 
-        // Profile Photo
-        [HttpPost("profilephoto")]
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteEmployee/{id}")]
+        public async Task<IActionResult> DeleteEmployee(string id)
+        {
+            try
+            {
+                bool result = await _employeeRepository.DeleteEmployee(id);
+                if (!result)
+                {
+                    return Ok(new ApiResponse<object> { Message = "Unable to delete employee" });
+                }
+                else
+                {
+                    return Ok(new ApiResponse<object> { Message = "User Deleted succesfully" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="photo"></param>
+        /// <returns></returns>
+        [HttpPost("AddProfilephoto")]
         [Authorize]
         public async Task<IActionResult> UpdateProfilePhoto([FromForm] IFormFile photo)
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             string username = User.FindFirstValue(ClaimTypes.Name);
+            List<string> fileTypes = new List<string>() { "jpg", "png", "jpeg" };
 
             if (photo == null || photo.Length == 0)
             {
                 return BadRequest("Please provide a valid photo");
             }
-
-            bool? upload = await _employee.UploadProfile(username, userId, photo);
-            if (upload == true)
+            else if (!fileTypes.Contains(Path.GetExtension(photo.FileName)))
             {
-                return Ok();
-            }
-            else if(upload == null)
-            {
-                return NotFound();
+                return BadRequest("Incorrect file type. File should be jpg/jpeg/png");
             }
             else
             {
-                return Ok("Error");
+
+                bool upload = await _employeeRepository.UploadProfilePhoto(username, userId, photo);
+                if (upload)
+                {
+                    return Ok("Photo uploaded successfully");
+                }
+                else
+                {
+                    return Ok("Unable to update photo");
+                }
             }
         }
 
-        //[HttpGet("profilephoto/{userId}")]
-        //public async Task<IActionResult> GetProfilePhoto(string userId)
-        //{
-        //    var profile = await _context.Profiles.SingleOrDefaultAsync(p => p.UserId == userId);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="empId"></param>
+        /// <returns></returns>
+        [HttpDelete("RemoveProfilePhoto/{empId}")]
+        public async Task<IActionResult> RemoveProfilePhoto(string empId)
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            bool result = await _employeeRepository.RemoveProfilePhoto(empId, userId);
+            if (result)
+            {
+                return Ok("Photo removed successfully");
+            }
+            else
+            {
+                return Ok("Unable to remove photo");
+            }
+        }
 
-        //    if (profile == null)
-        //    {
-        //        return NotFound("User profile not found");
-        //    }
-
-        //    if (string.IsNullOrEmpty(profile.PhotoUrl))
-        //    {
-        //        return NotFound("Profile photo not found");
-        //    }
-
-        //    string photoPath = Path.Combine(Directory.GetCurrentDirectory(), profile.PhotoUrl);
-        //    var photoBytes = await System.IO.File.ReadAllBytesAsync(photoPath);
-
-        //    return File(photoBytes, "image/jpeg");
-        //}
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetCount")]
+        public async Task<IActionResult> GetCount()
+        {
+            CountDto count = await _employeeRepository.GetCount();
+            return Ok(new ApiResponse<CountDto> { Message = "Count of employees, pending declaration and pending salary details", Result = count });
+        }
     }
 }
