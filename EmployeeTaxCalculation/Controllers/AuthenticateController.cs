@@ -1,9 +1,11 @@
 ﻿using EmployeeTaxCalculation.Constants;
 using EmployeeTaxCalculation.Data.DTOs;
 using EmployeeTaxCalculation.Data.Models;
+using EmployeeTaxCalculation.Service.DTOs;
 using EmployeeTaxCalculation.Service.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace EmployeeTaxCalculation.Controllers
 {
@@ -36,7 +38,7 @@ namespace EmployeeTaxCalculation.Controllers
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST /api/Authentication/Login
+        ///     POST /api/Authenticate/Login
         ///     {
         ///        "username": "string",
         ///        "password": "string"
@@ -80,7 +82,7 @@ namespace EmployeeTaxCalculation.Controllers
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST /api/Authentication/IsEmailExist/{email}
+        ///     POST /api/Authenticate/IsEmailExist/{email}
         ///     
         /// </remarks>
         /// <response code="200">Returns true if user with email present</response>
@@ -118,7 +120,7 @@ namespace EmployeeTaxCalculation.Controllers
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST /api/Authentication/IsUsernameExist/{username}
+        ///     POST /api/Authenticate/IsUsernameExist/{username}
         ///     
         /// </remarks>
         /// <response code="200">Returns true if user with username present</response>
@@ -146,6 +148,34 @@ namespace EmployeeTaxCalculation.Controllers
             {
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        [HttpPost]
+        [Route("RefreshToken")]
+        public async Task<IActionResult> RefreshToken(TokenDto tokenModel)
+        {
+            if (tokenModel is null)
+            {
+                return BadRequest("Invalid client request");
+            }
+
+            string? accessToken = tokenModel.AccessToken;
+            string? refreshToken = tokenModel.RefreshToken;
+
+            var principal = await _authenticationRepository.GetPrincipalFromExpiredToken(accessToken);
+            if (principal == null)
+            {
+                return BadRequest("Invalid access token or refresh token");
+            }
+
+            var newAccessToken = await _authenticationRepository.GetToken(principal.Claims.ToList());
+            var newRefreshToken = await _authenticationRepository.GenerateRefreshToken();
+
+            return new ObjectResult(new
+            {
+                accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
+                refreshToken = newRefreshToken
+            });
         }
     }
 }

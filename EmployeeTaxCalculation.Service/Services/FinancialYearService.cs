@@ -40,7 +40,10 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<List<FinancialYearDto>> GetFinancialYears()
         {
-            return await _dbContext.FinancialYear.Select(e => FinancialYearMapper.Map(e)).ToListAsync();
+            return await _dbContext.FinancialYear
+                            .Include(e => e.FinancialYearStart)
+                            .Include(e => e.FinancialYearEnd)
+                            .Select(e => FinancialYearMapper.Map(e)).ToListAsync();
         }
         
         public async Task<FinancialYearDto> GetCurrentFinancialYear()
@@ -50,10 +53,15 @@ namespace EmployeeTaxCalculation.Service.Services
             FinancialYear financialYear;
             if (currentMonth >= 4)
             {
-                financialYear = await _dbContext.FinancialYear.FirstAsync(e => e.FinancialYearStart.Year == currentYear);
+                financialYear = await _dbContext.FinancialYear
+                                        .Include(e => e.FinancialYearStart)
+                                        .Include(e => e.FinancialYearEnd)
+                                        .FirstAsync(e => e.FinancialYearStart.Year == currentYear);
             }
             else
-                financialYear = await _dbContext.FinancialYear.FirstAsync(e => e.FinancialYearEnd.Year == currentYear);
+                financialYear = await _dbContext.FinancialYear
+                                        .Include(e => e.FinancialYearStart)
+                                        .Include(e => e.FinancialYearEnd).FirstAsync(e => e.FinancialYearEnd.Year == currentYear);
             return FinancialYearMapper.Map(financialYear);
         }
     }

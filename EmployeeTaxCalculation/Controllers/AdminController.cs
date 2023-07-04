@@ -55,11 +55,11 @@ namespace EmployeeTaxCalculation.Controllers
         /// <response code="200">Admin details</response>
         /// <response code="404">Admin not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAdminById(string id)
         {
-            AdminDto result = await _adminRepository.GetAdmin(id);
+            AdminDto? result = await _adminRepository.GetAdmin(id);
             if(result == null)
             {
                 return NotFound(new ApiResponse<AdminDto> { Message = ResponseMessages.AdminNotFound, Result = result });
@@ -134,7 +134,7 @@ namespace EmployeeTaxCalculation.Controllers
         /// <response code="200">Returns message whether admin is updated or not</response>
         /// <response code="400">Returns error if input data is not in correct format</response>
         /// <response code="500">Internal server error</response>
-        [HttpPost("UpdateAdmin/{adminId}")]
+        [HttpPut("UpdateAdmin/{adminId}")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
@@ -172,7 +172,7 @@ namespace EmployeeTaxCalculation.Controllers
         /// </remarks>
         /// <response code="200">Returns message whether admin is deleted or not</response>
         /// <response code="500">Internal server error</response>
-        [HttpPost("DeleteAdmin/{adminId}")]
+        [HttpDelete("DeleteAdmin/{adminId}")]
         [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteAdmin(string adminId)

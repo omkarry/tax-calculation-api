@@ -186,9 +186,9 @@ namespace EmployeeTaxCalculation.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateProfilePhoto([FromForm] IFormFile photo)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            string username = User.FindFirstValue(ClaimTypes.Name);
-            List<string> fileTypes = new List<string>() { "jpg", "png", "jpeg" };
+            string userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Sid);
+            string username = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+            List<string> fileTypes = new List<string>() { ".jpg", ".png", ".jpeg" };
 
             if (photo == null || photo.Length == 0)
             {
@@ -234,14 +234,31 @@ namespace EmployeeTaxCalculation.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Get the counts
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns count of employees, pending declarations and pensing salary declarations</returns>
+        /// <remarks>
+        /// Sample request:
+        ///     
+        ///     GET /api/Employee/GetCount
+        ///     
+        /// </remarks>
+        /// <response code="200">Retuns count of employees, pending declaration and pending salary details</response>
+        /// <response code="500">Internal server error</response>
         [HttpGet("GetCount")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetCount()
         {
-            CountDto count = await _employeeRepository.GetCount();
-            return Ok(new ApiResponse<CountDto> { Message = "Count of employees, pending declaration and pending salary details", Result = count });
+            try
+            {
+                CountDto count = await _employeeRepository.GetCount();
+                return Ok(new ApiResponse<CountDto> { Message = ResponseMessages.Count, Result = count });
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

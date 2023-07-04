@@ -42,7 +42,7 @@ namespace EmployeeTaxCalculation.Service.Services
                     await _dbContext.SaveChangesAsync();
                     return true;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine(ex);
                     return false;
@@ -52,11 +52,11 @@ namespace EmployeeTaxCalculation.Service.Services
                 return false;
         }
 
-        public async Task<AdminDto> GetAdmin(string id)
+        public async Task<AdminDto?> GetAdmin(string id)
         {
             Employee? employee = await _dbContext.Employees.Include(e => e.User)
                                                     .FirstOrDefaultAsync(e => e.Id.Equals(id) && e.IsActive == true);
-            if(employee != null)
+            if (employee != null)
             {
                 return AdminMapper.Map(employee);
             }
@@ -66,14 +66,16 @@ namespace EmployeeTaxCalculation.Service.Services
 
         public async Task<List<AdminDto>> GetAdmins()
         {
-            List<Employee> admins = await _dbContext.Employees.Include(e => e.User)
-                                                    .Where(e => e.IsActive == true).ToListAsync();
-            if (admins.Count != 0)
-            {
-                return admins.Select(e => AdminMapper.Map(e)).ToList();
-            }
-            else
-                return null;
+            List<Employee> adminList = await _dbContext.Employees
+                                                .Include(e => e.User)
+                                                .Where(e => e.IsActive && _dbContext.UserRoles
+                                                    .Join(_dbContext.Roles,
+                                                        userRole => userRole.RoleId,
+                                                        role => role.Id,
+                                                        (userRole, role) => new { userRole.UserId, role.Name })
+                                                    .Any(joinResult => joinResult.Name == "Admin" && joinResult.UserId == e.Id))
+                                                .ToListAsync();
+            return adminList.Select(e => AdminMapper.Map(e)).ToList();
         }
 
         public async Task<bool> RegisterAdmin(string userId, RegisterDto model)
@@ -107,16 +109,7 @@ namespace EmployeeTaxCalculation.Service.Services
                         {
                             await _userManager.AddToRoleAsync(user, UserRoles.Admin);
                         }
-                        Employee newAdmin = new()
-                        {
-                            Id = user.Id,
-                            Name = model.Name!,
-                            CreatedAt = DateTime.Now,
-                            CreatedById = userId,
-                            IsActive = true
-                        };
 
-                        _dbContext.Employees.Add(newAdmin);
                         await _dbContext.SaveChangesAsync();
                         await dbcxtransaction.CommitAsync();
                         return true;
@@ -129,6 +122,7 @@ namespace EmployeeTaxCalculation.Service.Services
                     return false;
 
                 }
+
             }
         }
 
@@ -159,7 +153,7 @@ namespace EmployeeTaxCalculation.Service.Services
                 else
                     return false;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
                 return false;

@@ -23,5 +23,11 @@
 
         public const string EmployeeList = "List of employees";
         public const string NoEmployees = "No employees found";
+
+        public const string TaxDetailsList = "List of employees tax details";
+        public const string UnableToGetTaxDetails = "Unable to get tax details";
+        public const string EmployeeTaxDetails = "Employee tax details";
+
+        public const string Count = "Count of employees, pending declaration and pending salary details";
     }
 }

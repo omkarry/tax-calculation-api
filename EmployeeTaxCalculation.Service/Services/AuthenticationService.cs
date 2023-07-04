@@ -4,13 +4,10 @@ using EmployeeTaxCalculation.Service.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace EmployeeTaxCalculation.Service.Services
 {
@@ -59,11 +56,12 @@ namespace EmployeeTaxCalculation.Service.Services
                 {
                     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
                 }
-                JwtSecurityToken token = GetToken(authClaims);
+                JwtSecurityToken token = await GetToken(authClaims);
 
                 return new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
+                    refreshToken = GenerateRefreshToken(),
                     expiration = token.ValidTo,
                     role = userRoles[0],
                     userId = user.Id
@@ -73,19 +71,46 @@ namespace EmployeeTaxCalculation.Service.Services
                 return null;
         }
 
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
+        public async Task<JwtSecurityToken> GetToken(List<Claim> authClaims)
         {
             SymmetricSecurityKey authSigningKey = new(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
             JwtSecurityToken token = new(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddHours(3),
+                expires: DateTime.Now.AddDays(1),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                 );
 
             return token;
+        }
+
+        public async Task<string> GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        public async Task<ClaimsPrincipal?> GetPrincipalFromExpiredToken(string? token)
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])),
+                ValidateLifetime = false
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+
+            return principal;
         }
     }
 }
